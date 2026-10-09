@@ -252,7 +252,10 @@
                 <label class="text-xs sm:text-sm font-semibold text-slate-300">หน้าจอรายการตัวเลข</label>
                 <span class="text-xs text-amber-400">1 บรรทัด = 1 รายการแทง</span>
               </div>
-              <textarea id="entry-raw-text" rows="6" placeholder="กดแป้นตัวเลขด้านล่าง หรือพิมพ์คำสั่ง&#10;เช่น: 123 = 100x50&#10;89 = 200x200" class="w-full font-mono text-base sm:text-lg bg-slate-900 border border-slate-800 rounded-xl p-3.5 text-amber-300 focus:outline-none focus:border-amber-500 leading-relaxed"></textarea>
+              <textarea id="entry-raw-text" rows="7" 
+                inputmode="none" 
+                placeholder="ตัวอย่าง:&#10;123 = 100x50 (3บน 100, โต๊ด 50)&#10;89 = 200x200 (2บน 200, 2ล่าง 200)&#10;7 19ประตู = 50x50&#10;456 6กลับ = 50&#10;3หน้า 285 = 100&#10;3ล่าง 905 = 100&#10;วิ่งบน 9 = 500" 
+                class="w-full font-mono text-base sm:text-lg bg-slate-900 border border-slate-800 rounded-xl p-3.5 text-amber-300 focus:outline-none focus:border-amber-500 leading-relaxed"></textarea>
             </div>
 
             <!-- Quick Action Touch Bar (Tablet Optimized Numpad) -->
@@ -1028,6 +1031,14 @@
 
   <!-- ================= APPLICATION JAVASCRIPT ================= -->
   <script>
+
+    const entryTextarea = document.getElementById('entry-raw-text');
+
+    // บังคับไม่ให้คีย์บอร์ดเปิดเมื่อแตะ (Touch) แต่ยังคงให้โฟกัสเพื่อแสดงเคอร์เซอร์ได้
+    entryTextarea.addEventListener('touchstart', (e) => {
+      entryTextarea.focus({ preventScroll: true });
+    }, { passive: true });
+    
     // --- 1. THAI LABELS MAPPER ---
     const BET_TYPE_LABELS = {
       '3TOP': '3 ตัวบน',

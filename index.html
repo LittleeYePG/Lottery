@@ -1,0 +1,2696 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบบริหารจัดการและจำลองความเสี่ยงเจ้ามือหวย (Lottery Bookmaker Enterprise)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            darkcard: '#0f172a',
+            darksurface: '#090d16',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Prompt', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col md:flex-row antialiased overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+
+  <!-- Left Sidebar Navigation -->
+  <aside id="sidebar" class="w-full md:w-64 bg-slate-900/95 border-r border-slate-800/80 flex flex-col shrink-0 z-40 transition-all duration-300 md:min-h-screen">
+    <!-- Brand / System Title -->
+    <div class="p-4 border-b border-slate-800/80 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20 text-white">
+          <i data-lucide="layers" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+            LOTTO ENGINE
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono font-semibold">PRO v3.0</span>
+          </h1>
+          <p class="text-[11px] text-slate-400">ระบบจำลองเจ้ามือครบวงจร</p>
+        </div>
+      </div>
+      <button id="mobileMenuBtn" class="md:hidden text-slate-400 hover:text-white p-1">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Active Period Micro Badge in Sidebar -->
+    <div class="px-4 py-2.5 bg-slate-950/70 border-b border-slate-800/60 flex items-center justify-between text-xs">
+      <div class="flex items-center gap-2">
+        <span id="sidebarStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="sidebarPeriodName" class="text-slate-300 font-medium truncate max-w-[130px]">16 ต.ค. 2026</span>
+      </div>
+      <span id="sidebarPeriodStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+        เปิดรับ
+      </span>
+    </div>
+
+    <!-- Navigation Menus -->
+    <nav id="navMenu" class="p-3 space-y-1 flex-1 overflow-y-auto max-h-[calc(100vh-180px)]">
+      <button onclick="switchTab('overview')" class="nav-btn active w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition text-indigo-300 bg-indigo-600/20 border border-indigo-500/40">
+        <i data-lucide="layout-dashboard" class="w-4 h-4 text-indigo-400"></i>
+        <span>ภาพรวมระบบ (Overview)</span>
+      </button>
+
+      <button onclick="switchTab('entry')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+        <i data-lucide="file-plus-2" class="w-4 h-4 text-emerald-400"></i>
+        <span>รับโพย & คีย์ด่วน</span>
+        <span class="ml-auto text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-full font-mono">Parser</span>
+      </button>
+
+      <button onclick="switchTab('risk')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+        <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
+        <span>จัดการความเสี่ยง (Risk)</span>
+        <span id="riskAlertBadge" class="ml-auto text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-full font-mono">0 อั้น</span>
+      </button>
+
+      <button onclick="switchTab('capped')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+        <i data-lucide="ban" class="w-4 h-4 text-rose-400"></i>
+        <span>เลขอั้น & จ่ายครึ่ง</span>
+        <span id="cappedCountBadge" class="ml-auto text-[9px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded-full font-mono">0</span>
+      </button>
+
+      <button onclick="switchTab('agents')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+        <i data-lucide="users" class="w-4 h-4 text-cyan-400"></i>
+        <span>ข้อมูลตัวแทนจำหน่าย</span>
+        <span id="agentCountBadge" class="ml-auto text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-full font-mono">4</span>
+      </button>
+
+      <button onclick="switchTab('periods')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+        <i data-lucide="calendar-days" class="w-4 h-4 text-purple-400"></i>
+        <span>จัดการงวด (Periods)</span>
+      </button>
+
+      <button onclick="switchTab('tickets')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+        <i data-lucide="receipt" class="w-4 h-4 text-blue-400"></i>
+        <span>รายการโพยทั้งหมด</span>
+        <span id="ticketCountBadge" class="ml-auto text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-full font-mono">0</span>
+      </button>
+
+      <button onclick="switchTab('settlement')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+        <i data-lucide="award" class="w-4 h-4 text-yellow-400"></i>
+        <span>ออกรางวัล & ตัดงวด</span>
+      </button>
+
+      <button onclick="switchTab('settings')" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+        <i data-lucide="sliders-horizontal" class="w-4 h-4 text-slate-400"></i>
+        <span>เพดานรับ & อัตราจ่าย</span>
+      </button>
+    </nav>
+
+    <!-- Sidebar Quick Reset & Help -->
+    <div class="p-3 border-t border-slate-800/80 space-y-1.5">
+      <button onclick="resetToInitialMockData()" class="w-full text-[11px] text-slate-400 hover:text-rose-300 py-1.5 px-3 rounded hover:bg-slate-800/60 flex items-center justify-center gap-1.5 transition">
+        <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+        คืนค่าชุดจำลองเริ่มต้น
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col min-w-0">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900/60 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-6 py-3 sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 text-xs font-medium bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-lg text-slate-200">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span>งวด: <strong id="headerPeriodTitle" class="text-white font-mono">16 ตุลาคม 2026</strong></span>
+        </div>
+        <div id="headerIntakeStatusPill" class="flex items-center gap-1.5 text-xs font-mono bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-1.5 rounded-lg">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="headerIntakeStatusText">เปิดรับแทงปกติ</span>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Ribbon -->
+      <div class="flex items-center gap-2 sm:gap-3 text-xs font-mono">
+        <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
+          <span class="text-slate-400 text-[11px]">ยอดขาย:</span>
+          <span id="ribbonTurnover" class="ml-1 text-emerald-400 font-bold">฿0</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg hidden sm:block">
+          <span class="text-slate-400 text-[11px]">ส่งออก (Hedge):</span>
+          <span id="ribbonHedged" class="ml-1 text-purple-400 font-bold">฿0</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
+          <span class="text-slate-400 text-[11px]">Max Exposure:</span>
+          <span id="ribbonMaxExposure" class="ml-1 text-amber-400 font-bold">฿0</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Dynamic Tabs -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto">
+
+      <!-- TAB 1: OVERVIEW DASHBOARD -->
+      <section id="tab-overview" class="tab-content space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              ภาพรวมกระดานคำนวณและดัชนีชี้วัด (Executive Overview)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">สรุปภาพรวมงวดปัจจุบัน ความเสี่ยงจ่ายสูงสุด และอัตราผลตอบแทนคาดการณ์</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="injectSimulatedBurst()" class="text-xs bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-500/40 px-3 py-2 rounded-lg flex items-center gap-1.5 transition">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-indigo-300"></i>
+              จำลองยอดแทงพุ่งสูง (Burst Traffic)
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Key Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-4 shadow-sm relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-xs text-slate-400 font-medium">ยอดรับแทงรวม (Gross Turnover)</p>
+                <h3 id="cardTurnover" class="text-2xl font-bold font-mono text-emerald-400 mt-1">฿0</h3>
+              </div>
+              <div class="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
+                <i data-lucide="wallet" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <p id="cardTurnoverSub" class="text-[11px] text-slate-400 mt-3 font-mono">0 รายการแทงในงวดนี้</p>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-4 shadow-sm relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-xs text-slate-400 font-medium">ส่งต่อเจ้าใหญ่ (Re-insurance)</p>
+                <h3 id="cardHedged" class="text-2xl font-bold font-mono text-purple-400 mt-1">฿0</h3>
+              </div>
+              <div class="p-2.5 bg-purple-500/10 text-purple-400 rounded-lg border border-purple-500/20">
+                <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-3">ลดภาระขาดทุนส่วนเกิน</p>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-4 shadow-sm relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-xs text-slate-400 font-medium">ความเสี่ยงจ่ายสูงสุด (Max Liability)</p>
+                <h3 id="cardExposure" class="text-2xl font-bold font-mono text-amber-400 mt-1">฿0</h3>
+              </div>
+              <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20">
+                <i data-lucide="flame" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <p id="cardWorstCaseNum" class="text-[11px] text-amber-300/80 mt-3 font-mono">Worst-case: เลข -</p>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-4 shadow-sm relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-xs text-slate-400 font-medium">คอมมิชชันตัวแทนสุทธิ (Agent Comm)</p>
+                <h3 id="cardCommission" class="text-2xl font-bold font-mono text-cyan-400 mt-1">฿0</h3>
+              </div>
+              <div class="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-lg border border-cyan-500/20">
+                <i data-lucide="users" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <p id="cardNetExpected" class="text-[11px] text-slate-400 mt-3 font-mono">รายรับสุทธิหลังหักคอม: ฿0</p>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                  <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-400"></i>
+                  5 อันดับตัวเลขที่มีภาระจ่ายสูงสุด (Top Liability Numbers)
+                </h3>
+                <p class="text-xs text-slate-400">ตัวเลขที่ต้องเฝ้าระวังหากออกผลรางวัล</p>
+              </div>
+              <span class="text-[11px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded">หน่วย: บาท</span>
+            </div>
+            <div class="h-64 relative">
+              <canvas id="chartTopExposure"></canvas>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-purple-400"></i>
+                สัดส่วนยอดขายตามประเภทการแทง
+              </h3>
+            </div>
+            <div class="h-52 relative my-auto">
+              <canvas id="chartTypeDistribution"></canvas>
+            </div>
+            <div id="chartLegendCustom" class="grid grid-cols-3 gap-1 pt-2 text-[10px] text-slate-400 text-center font-mono border-t border-slate-800/80">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: FAST TICKET ENTRY & PARSER -->
+      <section id="tab-entry" class="tab-content hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              หน้าต่างรับโพยและแปลงไวยากรณ์ด่วน (Fast Ticket Entry Terminal)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">รองรับคีย์ลัด: 19 ประตู, 6 กลับ, 2 กลับ, เต็งโต๊ด (x) พร้อมตรวจจับเลขอั้นอัตโนมัติ</p>
+          </div>
+          <span id="terminalIntakeBadge" class="text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-3 py-1 rounded-full font-mono">
+            ระบบเปิดรับโพย
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Left: Input Syntax Area -->
+          <div class="lg:col-span-6 space-y-4">
+            <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <label for="agentSelect" class="text-xs font-semibold text-slate-300">ตัวแทนเดินโพย (Agent)</label>
+                <select id="agentSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-indigo-500">
+                  <!-- Populated from agents list -->
+                </select>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-center mb-1.5">
+                  <label for="syntaxInput" class="text-xs font-semibold text-slate-300">กล่องคีย์ข้อมูลด่วน (Syntax Text Area)</label>
+                  <span class="text-[11px] text-slate-400">1 บรรทัด = 1 ชุดคำสั่ง</span>
+                </div>
+                <textarea id="syntaxInput" rows="7" placeholder="ตัวอย่างการคีย์:
+456 x 100x100
+89 x 200
+5 บนล่าง 19ประตู x 50
+123 6กลับ x 50
+วิ่งบน 7 x 1000" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3.5 text-white font-mono text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+              </div>
+
+              <!-- Quick Helper Syntax Badges -->
+              <div>
+                <span class="text-xs text-slate-400 block mb-2">คลิกเพื่อแทรกรูปแบบตัวอย่าง (Cheat-sheet):</span>
+                <div class="flex flex-wrap gap-2 text-xs">
+                  <button onclick="appendSyntaxTemplate('789 x 100x50')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 font-mono">
+                    3 ตัวตรงxโต๊ด
+                  </button>
+                  <button onclick="appendSyntaxTemplate('5 บนล่าง 19ประตู x 20')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 font-mono">
+                    19 ประตู (20บ.)
+                  </button>
+                  <button onclick="appendSyntaxTemplate('456 6กลับ x 50')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 font-mono">
+                    6 กลับ (50บ.)
+                  </button>
+                  <button onclick="appendSyntaxTemplate('88 2กลับ x 100')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 font-mono">
+                    2 กลับ (100บ.)
+                  </button>
+                  <button onclick="appendSyntaxTemplate('วิ่งบน 8 x 500')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 font-mono">
+                    เลขวิ่ง
+                  </button>
+                </div>
+              </div>
+
+              <!-- Parser Action Button -->
+              <div class="flex gap-2 pt-2">
+                <button onclick="parseSyntaxInput()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md shadow-indigo-600/30 text-sm">
+                  <i data-lucide="cpu" class="w-4 h-4"></i>
+                  ประมวลผล & เช็กเลขอั้น (Parse & Validate)
+                </button>
+                <button onclick="clearSyntaxInput()" class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-slate-700">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Parsed Breakdown & Verification -->
+          <div class="lg:col-span-6 space-y-4">
+            <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm flex flex-col h-full">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                    <i data-lucide="check-check" class="w-4 h-4 text-emerald-400"></i>
+                    รายการที่แยกได้ (Parsed Line Items)
+                  </h3>
+                  <p class="text-xs text-slate-400">ตรวจสอบความเสี่ยงและอัตราจ่ายก่อนกดยืนยันบันทึกโพย</p>
+                </div>
+                <div class="text-right">
+                  <span id="previewCountBadge" class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">0 รายการ</span>
+                  <p id="previewTotalAmount" class="text-xs text-emerald-400 font-bold font-mono mt-0.5">รวม ฿0</p>
+                </div>
+              </div>
+
+              <!-- Table for preview items -->
+              <div class="border border-slate-800 rounded-lg overflow-hidden flex-1 overflow-y-auto max-h-[360px]">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-950 text-slate-400 font-mono sticky top-0">
+                    <tr>
+                      <th class="py-2 px-3">#</th>
+                      <th class="py-2 px-3">ประเภท</th>
+                      <th class="py-2 px-3">ตัวเลข</th>
+                      <th class="py-2 px-3 text-right">ยอดแทง</th>
+                      <th class="py-2 px-3 text-right">จ่ายบาทละ</th>
+                      <th class="py-2 px-3 text-center">สถานะอั้น</th>
+                    </tr>
+                  </thead>
+                  <tbody id="parsedItemsBody" class="divide-y divide-slate-800 font-mono">
+                    <tr>
+                      <td colspan="6" class="py-16 text-center text-slate-500 font-sans">
+                        ยังไม่มีรายการ ให้ป้อนคำสั่งทางฝั่งซ้ายแล้วกดปุ่ม "ประมวลผล"
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Final Confirm Button -->
+              <div class="pt-4 border-t border-slate-800 mt-4">
+                <button id="btnCommitTicket" onclick="commitParsedTicket()" disabled class="w-full bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition text-sm shadow-lg shadow-emerald-900/30">
+                  <i data-lucide="save" class="w-4 h-4"></i>
+                  บันทึกโพยเข้าสู่ระบบ (Commit Ticket to Ledger)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: RISK MANAGEMENT & HEDGING ENGINE -->
+      <section id="tab-risk" class="tab-content hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              เครื่องมือบริหารความเสี่ยงและการส่งต่อยอด (Risk Exposure Matrix & Hedging)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">ติดตามตัวเลขที่มี Exposure สูง คำนวณจุดคุ้มทุน และตัดยอดส่งออกเจ้ามือรายใหญ่ (Offloading)</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <button onclick="autoHedgeOverlimit()" class="bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/40 px-3 py-2 rounded-lg flex items-center gap-1.5 transition">
+              <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+              ตัดส่งต่อยอดเกินเพดานทั้งหมด (Auto-Hedge)
+            </button>
+          </div>
+        </div>
+
+        <!-- Risk Summary Strip -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
+            <div class="p-3 bg-rose-500/10 text-rose-400 rounded-lg border border-rose-500/20">
+              <i data-lucide="alert-octagon" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400">เลขที่เกินเพดานความเสี่ยง (Critical)</p>
+              <h4 id="riskCriticalCount" class="text-xl font-bold font-mono text-rose-400">0 ตัวเลข</h4>
+            </div>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
+            <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20">
+              <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400">เลขที่ควรปรับจ่ายครึ่งราคา (Warning)</p>
+              <h4 id="riskWarningCount" class="text-xl font-bold font-mono text-amber-400">0 ตัวเลข</h4>
+            </div>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
+            <div class="p-3 bg-purple-500/10 text-purple-400 rounded-lg border border-purple-500/20">
+              <i data-lucide="trending-down" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400">ยอดที่ส่งออกเจ้าใหญ่สะสมแล้ว</p>
+              <h4 id="riskTotalHedgedAmt" class="text-xl font-bold font-mono text-purple-400">฿0</h4>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risk Matrix Table -->
+        <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-semibold text-white">ตารางวิเคราะห์ความเสี่ยงรายตัวเลข (Exposure Matrix)</h3>
+              <span class="text-xs text-slate-500 font-mono">(เรียงลำดับจากภาระจ่ายสูงสุด)</span>
+            </div>
+            <!-- Filter by Bet Type -->
+            <div class="flex items-center gap-2 text-xs">
+              <span class="text-slate-400">กรองประเภท:</span>
+              <select id="riskTypeFilter" onchange="renderRiskMatrix()" class="bg-slate-950 border border-slate-700 rounded px-2.5 py-1 text-white">
+                <option value="ALL">ทั้งหมด (All Types)</option>
+                <option value="3_TOP">3 ตัวบน</option>
+                <option value="3_TOD">3 ตัวโต๊ด</option>
+                <option value="2_TOP">2 ตัวบน</option>
+                <option value="2_BOT">2 ตัวล่าง</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-96 overflow-y-auto border border-slate-800 rounded-lg">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950 text-slate-400 font-mono uppercase sticky top-0 z-10">
+                <tr>
+                  <th class="py-2.5 px-3">ตัวเลข</th>
+                  <th class="py-2.5 px-3">ประเภท</th>
+                  <th class="py-2.5 px-3 text-right">ยอดถือเอง (Retained)</th>
+                  <th class="py-2.5 px-3 text-right">ยอดส่งออก (Hedged)</th>
+                  <th class="py-2.5 px-3 text-right">อัตราจ่าย</th>
+                  <th class="py-2.5 px-3 text-right">Max Liability (ภาระจ่าย)</th>
+                  <th class="py-2.5 px-3 text-center">ระดับความเสี่ยง</th>
+                  <th class="py-2.5 px-3 text-center">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="riskMatrixBody" class="divide-y divide-slate-800 font-mono">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CAPPED NUMBERS & SPECIAL PAYOUTS (NEW) -->
+      <section id="tab-capped" class="tab-content hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              จัดการเลขอั้นและอัตราจ่ายพิเศษ (Capped Numbers & Policy)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">กำหนดตัวเลขที่งดรับแทง จ่ายครึ่งราคา หรือตั้งอัตราจ่ายพิเศษเฉพาะเลขประจำงวด</p>
+          </div>
+          <button onclick="openAddCappedModal()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-2 rounded-lg flex items-center gap-1.5 transition shadow-sm">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+            เพิ่มเลขอั้นประจำงวด
+          </button>
+        </div>
+
+        <!-- Capped Numbers Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-400">เลขอั้นจ่ายครึ่ง (50% Rate)</p>
+              <h4 id="cappedHalfCount" class="text-xl font-bold font-mono text-amber-400 mt-1">0 ตัวเลข</h4>
+            </div>
+            <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20">
+              <i data-lucide="percent" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-400">เลขงดรับแทงเด็ดขาด (Closed)</p>
+              <h4 id="cappedClosedCount" class="text-xl font-bold font-mono text-rose-400 mt-1">0 ตัวเลข</h4>
+            </div>
+            <div class="p-2.5 bg-rose-500/10 text-rose-400 rounded-lg border border-rose-500/20">
+              <i data-lucide="ban" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-400">อัตราจ่ายเฉพาะแบบ Custom</p>
+              <h4 id="cappedCustomCount" class="text-xl font-bold font-mono text-purple-400 mt-1">0 ตัวเลข</h4>
+            </div>
+            <div class="p-2.5 bg-purple-500/10 text-purple-400 rounded-lg border border-purple-500/20">
+              <i data-lucide="sliders" class="w-5 h-5"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Capped Numbers Table -->
+        <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i data-lucide="list-checks" class="w-4 h-4 text-indigo-400"></i>
+              รายการเลขอั้นสำหรับงวดปัจจุบัน
+            </h3>
+            <span class="text-xs text-slate-500 font-mono">ระบบตรวจสอบและตัดเรตให้อัตโนมัติในหน้าคีย์โพย</span>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-800 rounded-lg max-h-96 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950 text-slate-400 font-mono uppercase sticky top-0 z-10">
+                <tr>
+                  <th class="py-2.5 px-3">ตัวเลข</th>
+                  <th class="py-2.5 px-3">ประเภทที่บังคับใช้</th>
+                  <th class="py-2.5 px-3">นโยบายอั้น</th>
+                  <th class="py-2.5 px-3 text-right">อัตราจ่ายจ่ายจริง (บาทละ)</th>
+                  <th class="py-2.5 px-3">สาเหตุ / หมายเหตุ</th>
+                  <th class="py-2.5 px-3 text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="cappedTableBody" class="divide-y divide-slate-800 font-mono">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: AGENTS MANAGEMENT (NEW) -->
+      <section id="tab-agents" class="tab-content hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              ข้อมูลตัวแทนจำหน่ายและสายเดินโพย (Agents & Sub-Brokers)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">บริหารรายชื่อตัวแทน กำหนดเปอร์เซ็นต์ส่วนลดคอมมิชชัน วงเงินเครดิต และสรุปยอดส่งงวดนี้</p>
+          </div>
+          <button onclick="openAddAgentModal()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-2 rounded-lg flex items-center gap-1.5 transition shadow-sm">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+            เพิ่มตัวแทนใหม่
+          </button>
+        </div>
+
+        <!-- Agents Stats Strip -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-400">จำนวนตัวแทนทั้งหมด</p>
+              <h4 id="agentTotalStat" class="text-xl font-bold font-mono text-cyan-400 mt-1">0 คน</h4>
+            </div>
+            <div class="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-lg border border-cyan-500/20">
+              <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-400">ตัวแทนยอดส่งสูงสุด</p>
+              <h4 id="agentTopPerformer" class="text-sm font-bold text-emerald-400 mt-1 truncate max-w-[180px]">-</h4>
+            </div>
+            <div class="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
+              <i data-lucide="trending-up" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-400">คอมมิชชันค้างจ่ายรวม</p>
+              <h4 id="agentTotalCommStat" class="text-xl font-bold font-mono text-indigo-400 mt-1">฿0</h4>
+            </div>
+            <div class="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20">
+              <i data-lucide="coins" class="w-5 h-5"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agents Table -->
+        <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i data-lucide="contact-2" class="w-4 h-4 text-cyan-400"></i>
+              ทะเบียนตัวแทนจำหน่ายและบัญชีเดินโพย
+            </h3>
+            <span class="text-xs text-slate-500 font-mono">คำนวณส่วนลดคอมมิชชันตามจริงรายตัวแทน</span>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-800 rounded-lg">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950 text-slate-400 font-mono uppercase sticky top-0">
+                <tr>
+                  <th class="py-2.5 px-3">รหัส</th>
+                  <th class="py-2.5 px-3">ชื่อตัวแทน / สาย</th>
+                  <th class="py-2.5 px-3">เบอร์ติดต่อ</th>
+                  <th class="py-2.5 px-3 text-right">คอมมิชชัน (%)</th>
+                  <th class="py-2.5 px-3 text-right">วงเงินเครดิต</th>
+                  <th class="py-2.5 px-3 text-right">ยอดส่งงวดนี้</th>
+                  <th class="py-2.5 px-3 text-right">ยอดสุทธิส่งเจ้า</th>
+                  <th class="py-2.5 px-3 text-center">สถานะ</th>
+                  <th class="py-2.5 px-3 text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="agentsTableBody" class="divide-y divide-slate-800 font-mono">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: PERIOD MANAGEMENT (NEW) -->
+      <section id="tab-periods" class="tab-content hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              จัดการงวดหวยและประวัติการออกรางวัล (Period / Round Lifecycle)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">เปิด-ปิดรับแทงชั่วคราว ทำการ Archive งวดเก่า และตั้งค่างวดถัดไป</p>
+          </div>
+          <button onclick="openNewPeriodModal()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3 py-2 rounded-lg flex items-center gap-1.5 transition shadow-sm">
+            <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+            เปิดงวดใหม่ (Start New Period)
+          </button>
+        </div>
+
+        <!-- Current Active Period Control Card -->
+        <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/40 border border-slate-800 rounded-xl p-6 shadow-md space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="text-xs text-indigo-400 font-mono uppercase font-semibold">งวดปัจจุบันที่กำลังทำงาน (Active Round)</span>
+              <h3 id="periodActiveHeading" class="text-2xl font-bold text-white font-mono mt-1">งวดประจำวันที่ 16 ตุลาคม 2026</h3>
+              <p id="periodActiveSub" class="text-xs text-slate-400 mt-1">สร้างเมื่อ: 10/10/2026 09:00:00 | จำนวนโพยสะสม: 0 ใบ</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="btnToggleIntake" onclick="toggleIntakeStatus()" class="px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition bg-amber-600/30 hover:bg-amber-600 text-amber-200 hover:text-white border border-amber-500/40">
+                <i data-lucide="pause-circle" class="w-4 h-4"></i>
+                <span id="btnToggleIntakeText">ปิดรับแทงชั่วคราว</span>
+              </button>
+              <button onclick="switchTab('settlement')" class="px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                ไปหน้าออกรางวัล & ตัดยอด
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-800/80 text-xs font-mono">
+            <div class="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
+              <span class="text-slate-400 block text-[11px]">สถานะงวด</span>
+              <span id="periodStatusPill" class="text-emerald-400 font-bold mt-1 block">เปิดรับแทง</span>
+            </div>
+            <div class="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
+              <span class="text-slate-400 block text-[11px]">ยอดขายงวดนี้</span>
+              <span id="periodSalesPill" class="text-white font-bold mt-1 block">฿0</span>
+            </div>
+            <div class="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
+              <span class="text-slate-400 block text-[11px]">เลขอั้นประจำงวด</span>
+              <span id="periodCappedPill" class="text-amber-400 font-bold mt-1 block">0 รายการ</span>
+            </div>
+            <div class="p-3 bg-slate-950/60 rounded-lg border border-slate-800">
+              <span class="text-slate-400 block text-[11px]">ตัวแทนที่ส่งยอด</span>
+              <span id="periodActiveAgentsPill" class="text-cyan-400 font-bold mt-1 block">0 คน</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Archived Periods History Table -->
+        <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm space-y-4">
+          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+            <i data-lucide="history" class="w-4 h-4 text-purple-400"></i>
+            ประวัติงวดที่ผ่านมา (Archived Periods History)
+          </h3>
+
+          <div class="overflow-x-auto border border-slate-800 rounded-lg">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950 text-slate-400 font-mono uppercase">
+                <tr>
+                  <th class="py-2.5 px-3">ชื่องวด</th>
+                  <th class="py-2.5 px-3">ผลรางวัลที่ 1</th>
+                  <th class="py-2.5 px-3">2 ตัวล่าง</th>
+                  <th class="py-2.5 px-3 text-right">ยอดรับแทงรวม</th>
+                  <th class="py-2.5 px-3 text-right">ยอดจ่ายรางวัล</th>
+                  <th class="py-2.5 px-3 text-right">กำไรสุทธิ (Net P&L)</th>
+                  <th class="py-2.5 px-3 text-center">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="periodHistoryTableBody" class="divide-y divide-slate-800 font-mono">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 7: TICKET JOURNAL & AUDIT LOG -->
+      <section id="tab-tickets" class="tab-content hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              สมุดรายวันโพยและประวัติการทำรายการ (Ticket Ledger & Audit)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">ตรวจสอบโพยที่บันทึกเข้าระบบ สถานะการรับแทง และผลรางวัลรายโพย</p>
+          </div>
+          <!-- Filter Actions -->
+          <div class="flex items-center gap-2 text-xs">
+            <input type="text" id="ticketSearchInput" onkeyup="renderTicketsTable()" placeholder="ค้นหารหัสโพย / เลข / ตัวแทน..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white font-mono focus:outline-none focus:border-indigo-500">
+            <select id="ticketStatusFilter" onchange="renderTicketsTable()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white">
+              <option value="ALL">สถานะทั้งหมด</option>
+              <option value="WAITING">รอออกรางวัล</option>
+              <option value="WON">ถูกรางวัล</option>
+              <option value="LOST">ไม่ถูกรางวัล</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm">
+          <div class="overflow-x-auto max-h-[500px] overflow-y-auto border border-slate-800 rounded-lg">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950 text-slate-400 font-mono uppercase sticky top-0 z-10">
+                <tr>
+                  <th class="py-2.5 px-3">รหัสโพย</th>
+                  <th class="py-2.5 px-3">เวลา</th>
+                  <th class="py-2.5 px-3">ตัวแทน</th>
+                  <th class="py-2.5 px-3">จำนวนรายการ</th>
+                  <th class="py-2.5 px-3 text-right">ยอดรวม (Gross)</th>
+                  <th class="py-2.5 px-3 text-right">ยอดสุทธิหลังคอม</th>
+                  <th class="py-2.5 px-3 text-center">สถานะ</th>
+                  <th class="py-2.5 px-3 text-center">ตรวจสอบ</th>
+                </tr>
+              </thead>
+              <tbody id="ticketListBody" class="divide-y divide-slate-800 font-mono">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 8: DRAW SETTLEMENT & PAYOUT ENGINE -->
+      <section id="tab-settlement" class="tab-content hidden space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+              ระบบตรวจนับรางวัลและตัดยอดงวด (Settlement & P&L Engine)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">กรอกผลรางวัลสลากกินแบ่งรัฐบาลเพื่อประมวลผลจับคู่โพย และรองรับการคิดเงินตามเรตเลขอั้น</p>
+          </div>
+          <button onclick="fillRandomDrawResults()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+            <i data-lucide="dice-5" class="w-3.5 h-3.5"></i>
+            สุ่มผลรางวัลจำลอง (Randomize)
+          </button>
+        </div>
+
+        <!-- Draw Result Form Card -->
+        <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm space-y-4">
+          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+            <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
+            บันทึกผลการออกรางวัลสลากกินแบ่งรัฐบาล
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">รางวัลที่ 1 (6 หลัก)</label>
+              <input type="text" id="drawPrize1" value="512746" maxlength="6" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-center font-mono text-lg text-emerald-400 tracking-widest font-bold focus:outline-none focus:border-indigo-500">
+              <span class="text-[10px] text-slate-500 block mt-1">3 ตัวบน: 746 | 2 ตัวบน: 46</span>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">เลขท้าย 2 ตัว (ล่าง)</label>
+              <input type="text" id="drawTwoBot" value="82" maxlength="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-center font-mono text-lg text-cyan-400 tracking-widest font-bold focus:outline-none focus:border-indigo-500">
+              <span class="text-[10px] text-slate-500 block mt-1">2 ตัวล่าง: 82</span>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">เลขหน้า 3 ตัว (2 รางวัล)</label>
+              <input type="text" id="drawThreeFront" value="235, 419" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-center font-mono text-base text-slate-200 tracking-wider focus:outline-none focus:border-indigo-500">
+              <span class="text-[10px] text-slate-500 block mt-1">คั่นด้วยจุลภาค</span>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">เลขท้าย 3 ตัว (2 รางวัล)</label>
+              <input type="text" id="drawThreeBack" value="639, 874" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-center font-mono text-base text-slate-200 tracking-wider focus:outline-none focus:border-indigo-500">
+              <span class="text-[10px] text-slate-500 block mt-1">3 ตัวล่าง: 639, 874</span>
+            </div>
+          </div>
+
+          <div class="pt-2 flex flex-wrap gap-3">
+            <button onclick="executeSettlement()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 px-6 rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-600/20 text-sm">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              ประมวลผลตัดรอบบัญชี (Execute Settlement)
+            </button>
+          </div>
+        </div>
+
+        <!-- Settlement Statement Result (Displayed after processing) -->
+        <div id="settlementResultSection" class="hidden space-y-6">
+          <!-- P&L Alert Box -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl relative overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                <i data-lucide="file-spreadsheet" class="w-5 h-5 text-indigo-400"></i>
+                งบกำไรขาดทุนสุทธิของเจ้ามืองวดนี้ (Settlement Statement)
+              </h3>
+              <button onclick="archiveCurrentSettledPeriod()" class="text-xs bg-purple-600 hover:bg-purple-500 text-white font-medium px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+                <i data-lucide="archive" class="w-3.5 h-3.5"></i>
+                บันทึกปิดงวดลงประวัติ (Archive Period)
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl">
+                <span class="text-xs text-slate-400 block">ยอดขายรวม (Turnover)</span>
+                <span id="stmtTurnover" class="text-xl font-bold font-mono text-emerald-400 mt-1 block">฿0</span>
+              </div>
+              <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl">
+                <span class="text-xs text-slate-400 block">หัก คอมมิชชันตัวแทน</span>
+                <span id="stmtCommission" class="text-xl font-bold font-mono text-cyan-400 mt-1 block">-฿0</span>
+              </div>
+              <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl">
+                <span class="text-xs text-slate-400 block">หัก ยอดจ่ายรางวัลสุทธิ (Payouts)</span>
+                <span id="stmtPayout" class="text-xl font-bold font-mono text-rose-400 mt-1 block">-฿0</span>
+              </div>
+              <div class="bg-slate-950/80 border border-slate-800 p-4 rounded-xl">
+                <span class="text-xs text-slate-400 block">ผลกำไร/ขาดทุนสุทธิ (Net P&L)</span>
+                <span id="stmtNetPnL" class="text-2xl font-bold font-mono mt-1 block">฿0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Winning Tickets Table -->
+          <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                รายการโพยที่ถูกรางวัลทั้งหมด
+              </h4>
+              <span id="winningItemsCount" class="text-xs bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded">0 รายการ</span>
+            </div>
+            <div class="overflow-x-auto max-h-72 overflow-y-auto border border-slate-800 rounded-lg">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-950 text-slate-400 font-mono uppercase sticky top-0">
+                  <tr>
+                    <th class="py-2.5 px-3">รหัสโพย</th>
+                    <th class="py-2.5 px-3">ประเภท</th>
+                    <th class="py-2.5 px-3">เลขที่แทง</th>
+                    <th class="py-2.5 px-3 text-right">ยอดแทง</th>
+                    <th class="py-2.5 px-3 text-right">อัตราจ่ายที่คิด</th>
+                    <th class="py-2.5 px-3 text-right">เงินรางวัลที่ได้รับ</th>
+                  </tr>
+                </thead>
+                <tbody id="winningTicketsBody" class="divide-y divide-slate-800 font-mono">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 9: SETTINGS & RISK CAPS -->
+      <section id="tab-settings" class="tab-content hidden space-y-6">
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            ตั้งค่าอัตราจ่ายและเพดานความเสี่ยง (Configuration & Policy Engine)
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">ปรับแต่งเงื่อนไขการรับแทง อัตราจ่ายมาตรฐาน และกำหนดวงเงินคุ้มครองความเสี่ยงต่อประเภท</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Payout Rates Editor -->
+          <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm space-y-4">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i data-lucide="coins" class="w-4 h-4 text-amber-400"></i>
+              อัตราจ่ายมาตรฐาน (Payout Rates per 1 THB)
+            </h3>
+
+            <div class="space-y-3 text-xs">
+              <div class="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+                <span class="text-slate-300 font-medium">3 ตัวบน (ตรง)</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500">บาทละ</span>
+                  <input type="number" id="rate_3_TOP" value="900" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right font-mono font-bold text-white">
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+                <span class="text-slate-300 font-medium">3 ตัวโต๊ด</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500">บาทละ</span>
+                  <input type="number" id="rate_3_TOD" value="150" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right font-mono font-bold text-white">
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+                <span class="text-slate-300 font-medium">2 ตัวบน / 2 ตัวล่าง</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500">บาทละ</span>
+                  <input type="number" id="rate_2_DIGIT" value="95" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right font-mono font-bold text-white">
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+                <span class="text-slate-300 font-medium">วิ่งบน</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500">บาทละ</span>
+                  <input type="number" step="0.1" id="rate_RUN_TOP" value="3.2" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right font-mono font-bold text-white">
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+                <span class="text-slate-300 font-medium">วิ่งล่าง</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500">บาทละ</span>
+                  <input type="number" step="0.1" id="rate_RUN_BOT" value="4.2" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right font-mono font-bold text-white">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Risk Caps & Default Commission -->
+          <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-5 shadow-sm space-y-4">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+              เพดานความเสี่ยงสูงสุดที่ยอมรับได้ (Max Liability Caps)
+            </h3>
+
+            <div class="space-y-3 text-xs">
+              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-300">เพดานภาระจ่าย 3 ตัวบน (ต่อเลข)</span>
+                  <span id="capDisplay3Top" class="font-mono text-amber-400 font-bold">฿100,000</span>
+                </div>
+                <input type="range" id="capSlider3Top" min="20000" max="300000" step="10000" value="100000" class="w-full accent-indigo-500">
+              </div>
+
+              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-300">เพดานภาระจ่าย 2 ตัว (ต่อเลข)</span>
+                  <span id="capDisplay2Digit" class="font-mono text-amber-400 font-bold">฿50,000</span>
+                </div>
+                <input type="range" id="capSlider2Digit" min="10000" max="150000" step="5000" value="50000" class="w-full accent-indigo-500">
+              </div>
+
+              <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 flex justify-between items-center">
+                <div>
+                  <span class="text-slate-300 block">คอมมิชชันตัวแทนเริ่มต้น (%)</span>
+                  <span class="text-[11px] text-slate-500">สำหรับตัวแทนที่สร้างใหม่</span>
+                </div>
+                <input type="number" id="settingCommissionRate" value="12" class="w-20 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right font-mono font-bold text-white">
+              </div>
+            </div>
+
+            <div class="pt-3">
+              <button onclick="saveSystemSettings()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition text-sm">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                บันทึกการตั้งค่าระบบ (Save Policy)
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: ADD / EDIT CAPPED NUMBER -->
+  <div id="cappedModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-rose-400"></i>
+          กำหนดเลขอั้น / อัตราจ่ายพิเศษ
+        </h3>
+        <button onclick="closeCappedModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 mb-1">ตัวเลขที่ต้องการอั้น (เช่น 59, 89, 728)</label>
+          <input type="text" id="modalCappedNumber" placeholder="เช่น 89" maxlength="3" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-mono text-base font-bold uppercase tracking-wider focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1">ประเภทที่บังคับใช้</label>
+          <select id="modalCappedType" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500">
+            <option value="2_DIGIT">2 ตัว (บนและล่าง)</option>
+            <option value="2_TOP">2 ตัวบน เฉพาะ</option>
+            <option value="2_BOT">2 ตัวล่าง เฉพาะ</option>
+            <option value="3_TOP">3 ตัวบน</option>
+            <option value="3_TOD">3 ตัวโต๊ด</option>
+            <option value="ALL">ทุกประเภทที่เกี่ยวข้อง</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1">นโยบายการอั้น</label>
+          <select id="modalCappedAction" onchange="handleCappedActionChange()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500">
+            <option value="HALF_PAY">จ่ายครึ่งราคา (50% Standard Rate)</option>
+            <option value="CLOSED">งดรับแทงเด็ดขาด (Closed / Reject)</option>
+            <option value="CUSTOM_RATE">กำหนดอัตราจ่ายเฉพาะ (Custom Rate)</option>
+          </select>
+        </div>
+
+        <div id="modalCustomRateField" class="hidden">
+          <label class="block text-slate-300 mb-1">ระบุอัตราจ่ายเฉพาะ (บาทละ)</label>
+          <input type="number" id="modalCappedCustomRate" placeholder="เช่น 450" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono font-bold">
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1">สาเหตุ / แหล่งที่มาของเลข</label>
+          <input type="text" id="modalCappedReason" placeholder="เช่น เลขดังแม่น้ำหนึ่ง, ทะเบียนมงคล" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+        </div>
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button onclick="saveCappedNumber()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition text-xs shadow-md">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          บันทึกเลขอั้น
+        </button>
+        <button onclick="closeCappedModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+          ยกเลิก
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT AGENT -->
+  <div id="agentModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="modalAgentTitle" class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4 text-cyan-400"></i>
+          เพิ่มตัวแทนจำหน่ายใหม่
+        </h3>
+        <button onclick="closeAgentModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="modalAgentEditId" value="">
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 mb-1">รหัสตัวแทน (เช่น AG-05)</label>
+          <input type="text" id="modalAgentCode" placeholder="AG-05" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-mono uppercase font-bold focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1">ชื่อตัวแทน / สายเดินโพย</label>
+          <input type="text" id="modalAgentName" placeholder="เช่น สายตลาดไท - เจ๊พร" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1">เบอร์โทรศัพท์ติดต่อ</label>
+          <input type="text" id="modalAgentPhone" placeholder="08x-xxx-xxxx" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 mb-1">ค่าคอมมิชชัน (%)</label>
+            <input type="number" id="modalAgentComm" value="12" step="0.5" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono text-right font-bold">
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-1">วงเงินเครดิต (บาท)</label>
+            <input type="number" id="modalAgentCredit" value="50000" step="5000" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono text-right font-bold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1">สถานะตัวแทน</label>
+          <select id="modalAgentStatus" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white">
+            <option value="ACTIVE">เปิดใช้งานปกติ (Active)</option>
+            <option value="SUSPENDED">ระงับรับโพยชั่วคราว (Suspended)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button onclick="saveAgentData()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition text-xs shadow-md">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          บันทึกข้อมูลตัวแทน
+        </button>
+        <button onclick="closeAgentModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+          ยกเลิก
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: START NEW PERIOD -->
+  <div id="newPeriodModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="calendar-plus" class="w-4 h-4 text-emerald-400"></i>
+          เปิดงวดใหม่และเตรียมกระดาน
+        </h3>
+        <button onclick="closeNewPeriodModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 mb-1">ชื่องวด (Title)</label>
+          <input type="text" id="modalNewPeriodTitle" value="งวดประจำวันที่ 1 พฤศจิกายน 2026" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-medium focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-300 mb-1">วันที่ออกรางวัล</label>
+          <input type="date" id="modalNewPeriodDate" value="2026-11-01" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono">
+        </div>
+
+        <div class="p-3 bg-slate-950/70 border border-slate-800 rounded-lg space-y-2">
+          <span class="text-slate-300 font-semibold block">เงื่อนไขการเคลียร์ข้อมูล:</span>
+          <label class="flex items-center gap-2 text-slate-400 cursor-pointer">
+            <input type="checkbox" id="modalKeepCappedNumbers" checked class="rounded border-slate-700 accent-indigo-500">
+            <span>คัดลอกรายการเลขอั้นจากงวดปัจจุบันมาด้วย</span>
+          </label>
+          <label class="flex items-center gap-2 text-slate-400 cursor-pointer">
+            <input type="checkbox" id="modalArchiveCurrentCheck" checked class="rounded border-slate-700 accent-indigo-500">
+            <span>บันทึกงวดปัจจุบันลงในประวัติการตัดยอดโดยอัตโนมัติ</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button onclick="confirmLaunchNewPeriod()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition text-xs shadow-md">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          ยืนยันเปิดงวดใหม่
+        </button>
+        <button onclick="closeNewPeriodModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
+          ยกเลิก
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TICKET DETAIL -->
+  <div id="ticketModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h3 id="modalTicketId" class="text-base font-bold text-white font-mono">TICKET: -</h3>
+          <p id="modalTicketMeta" class="text-xs text-slate-400">-</p>
+        </div>
+        <button onclick="closeTicketModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="max-h-60 overflow-y-auto border border-slate-800 rounded-lg">
+        <table class="w-full text-left text-xs font-mono">
+          <thead class="bg-slate-950 text-slate-400 sticky top-0">
+            <tr>
+              <th class="py-2 px-3">ประเภท</th>
+              <th class="py-2 px-3">ตัวเลข</th>
+              <th class="py-2 px-3 text-right">ยอดแทง</th>
+              <th class="py-2 px-3 text-right">อัตราจ่าย</th>
+              <th class="py-2 px-3 text-center">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody id="modalTicketItemsBody" class="divide-y divide-slate-800">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex justify-between items-center pt-2 text-xs font-mono">
+        <span class="text-slate-400">ยอดรวมโพย: <strong id="modalTicketGross" class="text-white">฿0</strong></span>
+        <span class="text-slate-400">สุทธิหลังหักคอม: <strong id="modalTicketNet" class="text-emerald-400">฿0</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 border border-indigo-500/50 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300">
+    <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
+    <span id="toastMessage">ข้อความแจ้งเตือน</span>
+  </div>
+
+  <!-- JAVASCRIPT STATE ENGINE & CONTROLLER -->
+  <script>
+    // System Configurations
+    let APP_CONFIG = {
+      rates: {
+        '3_TOP': 900,
+        '3_TOD': 150,
+        '2_TOP': 95,
+        '2_BOT': 95,
+        'RUN_TOP': 3.2,
+        'RUN_BOT': 4.2
+      },
+      caps: {
+        '3_TOP': 100000,
+        '2_DIGIT': 50000
+      },
+      defaultCommissionRate: 0.12
+    };
+
+    // Current Active Round State
+    let currentPeriod = {
+      id: 'PR-2026-10-16',
+      title: 'งวดประจำวันที่ 16 ตุลาคม 2026',
+      drawDate: '2026-10-16',
+      status: 'OPEN', // OPEN | CLOSED | SETTLED
+      createdDate: '10/10/2026 09:00:00'
+    };
+
+    // Archived Rounds History
+    let periodHistory = [
+      {
+        id: 'PR-2026-10-01',
+        title: 'งวดประจำวันที่ 1 ตุลาคม 2026',
+        drawDate: '2026-10-01',
+        prize1: '384592',
+        twoBot: '30',
+        turnover: 184500,
+        payout: 112000,
+        netPnL: 50360,
+        status: 'ARCHIVED'
+      },
+      {
+        id: 'PR-2026-09-16',
+        title: 'งวดประจำวันที่ 16 กันยายน 2026',
+        drawDate: '2026-09-16',
+        prize1: '942708',
+        twoBot: '14',
+        turnover: 142000,
+        payout: 68000,
+        netPnL: 56960,
+        status: 'ARCHIVED'
+      }
+    ];
+
+    // Capped Numbers Directory
+    let cappedNumbers = [
+      { id: 'CAP-1', number: '746', type: '3_TOP', action: 'HALF_PAY', rate: 450, reason: 'เลขดังป้ายทะเบียน' },
+      { id: 'CAP-2', number: '82', type: '2_DIGIT', action: 'HALF_PAY', rate: 47.5, reason: 'เกจิดังให้ตรงกัน' },
+      { id: 'CAP-3', number: '99', type: '2_DIGIT', action: 'CLOSED', rate: 0, reason: 'เจ้าใหญ่ปิดรับแทงทั่วประเทศ' },
+      { id: 'CAP-4', number: '596', type: '3_TOP', action: 'CUSTOM_RATE', rate: 500, reason: 'ยอดแทงหนาแน่นเป็นพิเศษ' }
+    ];
+
+    // Sub-agent directory with custom commission & limits
+    let agents = [
+      { id: 'AG-01', name: 'สายเหนือ - พี่วิทย์', phone: '081-445-8891', commission: 12, credit: 100000, status: 'ACTIVE' },
+      { id: 'AG-02', name: 'สายตลาดสด - เจ๊ณี', phone: '089-231-0982', commission: 14, credit: 80000, status: 'ACTIVE' },
+      { id: 'AG-03', name: 'สายโรงงาน - บังแอล', phone: '086-778-1234', commission: 12, credit: 50000, status: 'ACTIVE' },
+      { id: 'AG-04', name: 'VIP หน้าเคาน์เตอร์', phone: '082-990-1122', commission: 10, credit: 200000, status: 'ACTIVE' }
+    ];
+
+    // Global Tickets State
+    let tickets = [];
+    let ticketCounter = 1001;
+    let temporaryParsedLines = [];
+    let chartTopExposureInstance = null;
+    let chartTypeDistInstance = null;
+
+    // Rich Initial Mock Tickets for Demonstration
+    function getInitialMockTickets() {
+      return [
+        {
+          id: 'TK-1001',
+          time: '11:15:20',
+          agentId: 'AG-01',
+          agent: 'AG-01 (สายเหนือ - พี่วิทย์)',
+          gross: 1200,
+          net: 1056,
+          status: 'WAITING',
+          items: [
+            { type: '3_TOP', number: '746', amount: 100, rate: 450, isCapped: true, capInfo: 'อั้นจ่ายครึ่ง', hedged: 0, isWin: null, winAmount: 0 },
+            { type: '3_TOD', number: '746', amount: 100, rate: 150, isCapped: false, hedged: 0, isWin: null, winAmount: 0 },
+            { type: '2_TOP', number: '46', amount: 500, rate: 95, isCapped: false, hedged: 0, isWin: null, winAmount: 0 },
+            { type: '2_BOT', number: '82', amount: 500, rate: 47.5, isCapped: true, capInfo: 'อั้นจ่ายครึ่ง', hedged: 0, isWin: null, winAmount: 0 }
+          ]
+        },
+        {
+          id: 'TK-1002',
+          time: '11:22:45',
+          agentId: 'AG-02',
+          agent: 'AG-02 (สายตลาดสด - เจ๊ณี)',
+          gross: 850,
+          net: 731,
+          status: 'WAITING',
+          items: [
+            { type: '3_TOP', number: '843', amount: 50, rate: 900, isCapped: false, hedged: 0, isWin: null, winAmount: 0 },
+            { type: '3_TOD', number: '843', amount: 100, rate: 150, isCapped: false, hedged: 0, isWin: null, winAmount: 0 },
+            { type: 'RUN_TOP', number: '4', amount: 400, rate: 3.2, isCapped: false, hedged: 0, isWin: null, winAmount: 0 },
+            { type: 'RUN_BOT', number: '8', amount: 300, rate: 4.2, isCapped: false, hedged: 0, isWin: null, winAmount: 0 }
+          ]
+        },
+        {
+          id: 'TK-1003',
+          time: '11:35:10',
+          agentId: 'AG-03',
+          agent: 'AG-03 (สายโรงงาน - บังแอล)',
+          gross: 1500,
+          net: 1320,
+          status: 'WAITING',
+          items: [
+            { type: '2_TOP', number: '96', amount: 500, rate: 95, isCapped: false, hedged: 0, isWin: null, winAmount: 0 },
+            { type: '2_BOT', number: '69', amount: 500, rate: 95, isCapped: false, hedged: 0, isWin: null, winAmount: 0 },
+            { type: '3_TOP', number: '596', amount: 500, rate: 500, isCapped: true, capInfo: 'เรตพิเศษ', hedged: 100, isWin: null, winAmount: 0 }
+          ]
+        },
+        {
+          id: 'TK-1004',
+          time: '11:42:00',
+          agentId: 'AG-04',
+          agent: 'AG-04 (VIP หน้าเคาน์เตอร์)',
+          gross: 2400,
+          net: 2160,
+          status: 'WAITING',
+          items: [
+            { type: '3_TOP', number: '746', amount: 200, rate: 450, isCapped: true, capInfo: 'อั้นจ่ายครึ่ง', hedged: 50, isWin: null, winAmount: 0 },
+            { type: '2_TOP', number: '46', amount: 1000, rate: 95, isCapped: false, hedged: 200, isWin: null, winAmount: 0 },
+            { type: '2_BOT', number: '82', amount: 1200, rate: 47.5, isCapped: true, capInfo: 'อั้นจ่ายครึ่ง', hedged: 400, isWin: null, winAmount: 0 }
+          ]
+        }
+      ];
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-indigo-300', 'bg-indigo-600/20', 'border-indigo-500/40');
+        btn.classList.add('text-slate-400', 'border-transparent');
+      });
+
+      const activeSection = document.getElementById(`tab-${tabId}`);
+      if (activeSection) activeSection.classList.remove('hidden');
+
+      const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick')?.includes(`'${tabId}'`));
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'text-indigo-300', 'bg-indigo-600/20', 'border-indigo-500/40');
+        activeBtn.classList.remove('text-slate-400', 'border-transparent');
+      }
+
+      // Re-trigger layout calculations
+      if (tabId === 'overview') updateCharts();
+      if (tabId === 'risk') renderRiskMatrix();
+      if (tabId === 'tickets') renderTicketsTable();
+      if (tabId === 'capped') renderCappedTable();
+      if (tabId === 'agents') renderAgentsTable();
+      if (tabId === 'periods') renderPeriodsView();
+      lucide.createIcons();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const msgEl = document.getElementById('toastMessage');
+      msgEl.innerText = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    function formatTypeName(type) {
+      const map = {
+        '3_TOP': '3 ตัวบน',
+        '3_TOD': '3 ตัวโต๊ด',
+        '2_TOP': '2 ตัวบน',
+        '2_BOT': '2 ตัวล่าง',
+        'RUN_TOP': 'วิ่งบน',
+        'RUN_BOT': 'วิ่งล่าง'
+      };
+      return map[type] || type;
+    }
+
+    // Helper: Find Capped Rule for a given number and bet type
+    function findCappedRule(number, betType) {
+      return cappedNumbers.find(rule => {
+        if (rule.number !== number) return false;
+        if (rule.type === 'ALL') return true;
+        if (rule.type === '2_DIGIT' && (betType === '2_TOP' || betType === '2_BOT')) return true;
+        return rule.type === betType;
+      });
+    }
+
+    function getPermutations(str) {
+      if (str.length <= 1) return [str];
+      let results = [];
+      for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        const remaining = str.slice(0, i) + str.slice(i + 1);
+        for (const sub of getPermutations(remaining)) {
+          results.push(char + sub);
+        }
+      }
+      return [...new Set(results)];
+    }
+
+    function generate19Doors(digitStr) {
+      const d = digitStr.trim();
+      const pairs = new Set();
+      for (let i = 0; i <= 9; i++) {
+        pairs.add(`${d}${i}`);
+        pairs.add(`${i}${d}`);
+      }
+      return [...pairs];
+    }
+
+    function parseSyntaxInput() {
+      if (currentPeriod.status !== 'OPEN') {
+        showToast('งวดนี้ปิดรับแทงชั่วคราวแล้ว ไม่สามารถคีย์โพยใหม่ได้');
+        return;
+      }
+
+      const rawText = document.getElementById('syntaxInput').value.trim();
+      if (!rawText) {
+        showToast('กรุณากรอกข้อความคำสั่งแทงก่อนประมวลผล');
+        return;
+      }
+
+      const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      let parsed = [];
+      let rejectedCappedLines = [];
+
+      lines.forEach((line) => {
+        // Pattern 1: 19 Doors -> "5 บนล่าง 19ประตู x 20"
+        if (/(\d)\s*(บนล่าง|บน|ล่าง)?\s*19ประตู\s*x\s*(\d+)/i.test(line)) {
+          const match = line.match(/(\d)\s*(บนล่าง|บน|ล่าง)?\s*19ประตู\s*x\s*(\d+)/i);
+          const digit = match[1];
+          const scope = match[2] || 'บนล่าง';
+          const amt = parseFloat(match[3]);
+          const pairs = generate19Doors(digit);
+
+          pairs.forEach(p => {
+            if (scope === 'บน' || scope === 'บนล่าง') addParsedLine('2_TOP', p, amt, parsed, rejectedCappedLines);
+            if (scope === 'ล่าง' || scope === 'บนล่าง') addParsedLine('2_BOT', p, amt, parsed, rejectedCappedLines);
+          });
+          return;
+        }
+
+        // Pattern 2: 6 กลับ / 2 กลับ -> "123 6กลับ x 50"
+        if (/(\d{2,3})\s*([26]กลับ|กลับ)\s*x\s*(\d+)/i.test(line)) {
+          const match = line.match(/(\d{2,3})\s*([26]กลับ|กลับ)\s*x\s*(\d+)/i);
+          const num = match[1];
+          const amt = parseFloat(match[3]);
+          const perms = getPermutations(num);
+          const type = num.length === 3 ? '3_TOP' : '2_TOP';
+
+          perms.forEach(p => addParsedLine(type, p, amt, parsed, rejectedCappedLines));
+          return;
+        }
+
+        // Pattern 3: Run Digits -> "วิ่งบน 7 x 500"
+        if (/วิ่ง(บน|ล่าง)\s*(\d)\s*x\s*(\d+)/i.test(line)) {
+          const match = line.match(/วิ่ง(บน|ล่าง)\s*(\d)\s*x\s*(\d+)/i);
+          const type = match[1] === 'บน' ? 'RUN_TOP' : 'RUN_BOT';
+          const num = match[2];
+          const amt = parseFloat(match[3]);
+          addParsedLine(type, num, amt, parsed, rejectedCappedLines);
+          return;
+        }
+
+        // Pattern 4: Standard Straight x Tod -> "456 x 100x50" or "89 x 200"
+        if (/(\d{2,3})\s*x\s*(\d+)(?:x(\d+))?/i.test(line)) {
+          const match = line.match(/(\d{2,3})\s*x\s*(\d+)(?:x(\d+))?/i);
+          const num = match[1];
+          const straightAmt = parseFloat(match[2]);
+          const todAmt = match[3] ? parseFloat(match[3]) : null;
+
+          if (num.length === 3) {
+            if (straightAmt > 0) addParsedLine('3_TOP', num, straightAmt, parsed, rejectedCappedLines);
+            if (todAmt && todAmt > 0) addParsedLine('3_TOD', num, todAmt, parsed, rejectedCappedLines);
+          } else if (num.length === 2) {
+            if (straightAmt > 0) addParsedLine('2_TOP', num, straightAmt, parsed, rejectedCappedLines);
+            if (todAmt && todAmt > 0) addParsedLine('2_BOT', num, todAmt, parsed, rejectedCappedLines);
+          }
+          return;
+        }
+      });
+
+      if (rejectedCappedLines.length > 0) {
+        showToast(`แจ้งเตือน: ปฏิเสธการรับ ${rejectedCappedLines.length} รายการเนื่องจากเป็นเลขอั้นงดรับแทง`);
+      }
+
+      if (parsed.length === 0) {
+        showToast('ไม่พบรายการที่สามารถบันทึกได้ กรุณาตรวจสอบคำสั่ง');
+        return;
+      }
+
+      temporaryParsedLines = parsed;
+      renderParsedPreview();
+      showToast(`แปลงสำเร็จ ${parsed.length} รายการ`);
+    }
+
+    function addParsedLine(type, number, amount, targetList, rejectedList) {
+      const capRule = findCappedRule(number, type);
+      let standardRate = APP_CONFIG.rates[type];
+      let finalRate = standardRate;
+      let isCapped = false;
+      let capInfo = 'ปกติ';
+
+      if (capRule) {
+        if (capRule.action === 'CLOSED') {
+          rejectedList.push(`${number} (${formatTypeName(type)})`);
+          return; // Rejected completely!
+        } else if (capRule.action === 'HALF_PAY') {
+          finalRate = standardRate / 2;
+          isCapped = true;
+          capInfo = 'อั้นจ่ายครึ่ง';
+        } else if (capRule.action === 'CUSTOM_RATE') {
+          finalRate = capRule.rate;
+          isCapped = true;
+          capInfo = `เรตพิเศษ ${capRule.rate}`;
+        }
+      }
+
+      targetList.push({
+        type: type,
+        number: number,
+        amount: amount,
+        rate: finalRate,
+        isCapped: isCapped,
+        capInfo: capInfo
+      });
+    }
+
+    function renderParsedPreview() {
+      const tbody = document.getElementById('parsedItemsBody');
+      const countBadge = document.getElementById('previewCountBadge');
+      const totalAmountEl = document.getElementById('previewTotalAmount');
+      const btnCommit = document.getElementById('btnCommitTicket');
+
+      if (temporaryParsedLines.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-16 text-center text-slate-500 font-sans">ยังไม่มีรายการ</td></tr>`;
+        countBadge.innerText = '0 รายการ';
+        totalAmountEl.innerText = 'รวม ฿0';
+        btnCommit.disabled = true;
+        return;
+      }
+
+      let totalGross = 0;
+      tbody.innerHTML = temporaryParsedLines.map((item, idx) => {
+        totalGross += item.amount;
+        let capBadge = `<span class="text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[10px]">ปกติ</span>`;
+        if (item.isCapped) {
+          capBadge = `<span class="text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded text-[10px] font-bold border border-amber-500/30">${item.capInfo}</span>`;
+        }
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="py-2 px-3 text-slate-500">${idx + 1}</td>
+            <td class="py-2 px-3 text-slate-300 font-sans">${formatTypeName(item.type)}</td>
+            <td class="py-2 px-3 text-white font-bold tracking-wider">${item.number}</td>
+            <td class="py-2 px-3 text-right text-slate-200">฿${item.amount.toLocaleString()}</td>
+            <td class="py-2 px-3 text-right ${item.isCapped ? 'text-amber-400 font-bold' : 'text-slate-400'}">x${item.rate}</td>
+            <td class="py-2 px-3 text-center">${capBadge}</td>
+          </tr>
+        `;
+      }).join('');
+
+      countBadge.innerText = `${temporaryParsedLines.length} รายการ`;
+      totalAmountEl.innerText = `รวม ฿${totalGross.toLocaleString()}`;
+      btnCommit.disabled = false;
+      lucide.createIcons();
+    }
+
+    function appendSyntaxTemplate(syntax) {
+      const area = document.getElementById('syntaxInput');
+      area.value = area.value ? area.value + '\n' + syntax : syntax;
+    }
+
+    function clearSyntaxInput() {
+      document.getElementById('syntaxInput').value = '';
+      temporaryParsedLines = [];
+      renderParsedPreview();
+    }
+
+    function commitParsedTicket() {
+      if (temporaryParsedLines.length === 0) return;
+
+      const agentId = document.getElementById('agentSelect').value;
+      const targetAgent = agents.find(a => a.id === agentId) || agents[0];
+      const commPercent = targetAgent.commission || (APP_CONFIG.defaultCommissionRate * 100);
+
+      const gross = temporaryParsedLines.reduce((acc, i) => acc + i.amount, 0);
+      const commission = gross * (commPercent / 100);
+      const net = gross - commission;
+
+      const newTicket = {
+        id: `TK-${ticketCounter++}`,
+        time: new Date().toLocaleTimeString('th-TH', { hour12: false }),
+        agentId: targetAgent.id,
+        agent: `${targetAgent.id} (${targetAgent.name})`,
+        gross: gross,
+        net: net,
+        status: 'WAITING',
+        items: temporaryParsedLines.map(i => ({ ...i, hedged: 0, isWin: null, winAmount: 0 }))
+      };
+
+      tickets.unshift(newTicket);
+      temporaryParsedLines = [];
+      document.getElementById('syntaxInput').value = '';
+      renderParsedPreview();
+
+      showToast(`บันทึกโพย ${newTicket.id} เข้าสู่ระบบเรียบร้อย`);
+      updateAllSystemViews();
+    }
+
+    function getAggregateExposureData() {
+      const matrix = {};
+      let totalSales = 0;
+      let totalHedged = 0;
+
+      tickets.forEach(ticket => {
+        totalSales += ticket.gross;
+        ticket.items.forEach(line => {
+          const key = `${line.type}#${line.number}`;
+          if (!matrix[key]) {
+            matrix[key] = {
+              type: line.type,
+              number: line.number,
+              amount: 0,
+              hedged: 0,
+              rate: line.rate
+            };
+          }
+          matrix[key].amount += line.amount;
+          matrix[key].hedged += (line.hedged || 0);
+          totalHedged += (line.hedged || 0);
+        });
+      });
+
+      const list = Object.values(matrix).map(item => {
+        const retainedAmt = Math.max(0, item.amount - item.hedged);
+        const maxLiability = retainedAmt * item.rate;
+        const cap = item.type.includes('3_') ? APP_CONFIG.caps['3_TOP'] : APP_CONFIG.caps['2_DIGIT'];
+        
+        let riskLevel = 'SAFE';
+        if (maxLiability > cap) riskLevel = 'CRITICAL';
+        else if (maxLiability > cap * 0.75) riskLevel = 'WARNING';
+
+        return {
+          ...item,
+          retainedAmt,
+          maxLiability,
+          cap,
+          riskLevel
+        };
+      }).sort((a, b) => b.maxLiability - a.maxLiability);
+
+      return {
+        list,
+        totalSales,
+        totalHedged,
+        maxLiability: list.length > 0 ? list[0].maxLiability : 0,
+        worstNumber: list.length > 0 ? `${list[0].number} (${formatTypeName(list[0].type)})` : 'ไม่มี'
+      };
+    }
+
+    function calculateTotalAgentCommission() {
+      return tickets.reduce((sum, t) => {
+        const ag = agents.find(a => a.id === t.agentId);
+        const rate = (ag ? ag.commission : 12) / 100;
+        return sum + (t.gross * rate);
+      }, 0);
+    }
+
+    function updateAllSystemViews() {
+      const { list, totalSales, totalHedged, maxLiability, worstNumber } = getAggregateExposureData();
+      const totalCommission = calculateTotalAgentCommission();
+      const netAfterComm = totalSales - totalCommission;
+
+      // Header Ribbon
+      document.getElementById('ribbonTurnover').innerText = `฿${totalSales.toLocaleString()}`;
+      document.getElementById('ribbonHedged').innerText = `฿${totalHedged.toLocaleString()}`;
+      document.getElementById('ribbonMaxExposure').innerText = `฿${maxLiability.toLocaleString()}`;
+
+      // Tab 1 KPI Cards
+      document.getElementById('cardTurnover').innerText = `฿${totalSales.toLocaleString()}`;
+      document.getElementById('cardTurnoverSub').innerText = `${tickets.length} โพยในงวดปัจจุบัน`;
+      document.getElementById('cardHedged').innerText = `฿${totalHedged.toLocaleString()}`;
+      document.getElementById('cardExposure').innerText = `฿${maxLiability.toLocaleString()}`;
+      document.getElementById('cardCommission').innerText = `฿${totalCommission.toLocaleString()}`;
+      document.getElementById('cardNetExpected').innerText = `รายรับสุทธิหลังหักคอม: ฿${netAfterComm.toLocaleString()}`;
+      document.getElementById('cardWorstCaseNum').innerText = `Worst-case: ${worstNumber}`;
+
+      // Badges
+      const criticalCount = list.filter(i => i.riskLevel === 'CRITICAL').length;
+      const warningCount = list.filter(i => i.riskLevel === 'WARNING').length;
+      document.getElementById('riskAlertBadge').innerText = `${criticalCount} เกินเพดาน`;
+      document.getElementById('ticketCountBadge').innerText = tickets.length;
+      document.getElementById('cappedCountBadge').innerText = cappedNumbers.length;
+      document.getElementById('agentCountBadge').innerText = agents.length;
+
+      // Tab 3 Strip Cards
+      document.getElementById('riskCriticalCount').innerText = `${criticalCount} ตัวเลข`;
+      document.getElementById('riskWarningCount').innerText = `${warningCount} ตัวเลข`;
+      document.getElementById('riskTotalHedgedAmt').innerText = `฿${totalHedged.toLocaleString()}`;
+
+      // Period Controls Sync
+      document.getElementById('periodSalesPill').innerText = `฿${totalSales.toLocaleString()}`;
+      document.getElementById('periodCappedPill').innerText = `${cappedNumbers.length} รายการ`;
+      const activeAgentsCount = new Set(tickets.map(t => t.agentId)).size;
+      document.getElementById('periodActiveAgentsPill').innerText = `${activeAgentsCount} คน`;
+
+      // Update Sub-views
+      renderAgentSelectOptions();
+      renderRiskMatrix();
+      renderTicketsTable();
+      renderCappedTable();
+      renderAgentsTable();
+      renderPeriodsView();
+      updateCharts();
+    }
+
+    function renderRiskMatrix() {
+      const tbody = document.getElementById('riskMatrixBody');
+      const filter = document.getElementById('riskTypeFilter').value;
+      const { list } = getAggregateExposureData();
+
+      const filtered = filter === 'ALL' ? list : list.filter(i => i.type === filter);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-slate-500 font-sans">ไม่พบรายการความเสี่ยง</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => {
+        let badge = `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">ปลอดภัย</span>`;
+        if (item.riskLevel === 'CRITICAL') {
+          badge = `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse font-bold">เกินเพดาน (อั้น)</span>`;
+        } else if (item.riskLevel === 'WARNING') {
+          badge = `<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">ควรจ่ายครึ่ง</span>`;
+        }
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="py-2.5 px-3 font-bold text-white text-sm">${item.number}</td>
+            <td class="py-2.5 px-3 text-slate-400 font-sans">${formatTypeName(item.type)}</td>
+            <td class="py-2.5 px-3 text-right text-slate-200">฿${item.retainedAmt.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right text-purple-400">฿${item.hedged.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right text-slate-400">x${item.rate}</td>
+            <td class="py-2.5 px-3 text-right font-bold ${item.riskLevel === 'CRITICAL' ? 'text-rose-400' : 'text-amber-400'}">฿${item.maxLiability.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-center">${badge}</td>
+            <td class="py-2.5 px-3 text-center">
+              <button onclick="hedgeSingleNumber('${item.type}', '${item.number}')" class="px-2 py-1 bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white rounded border border-purple-500/40 text-[10px] transition">
+                ส่งออกเจ้าใหญ่
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function hedgeSingleNumber(type, number) {
+      let hedgedAmountThisTime = 0;
+      tickets.forEach(ticket => {
+        ticket.items.forEach(line => {
+          if (line.type === type && line.number === number) {
+            const availableToHedge = line.amount - (line.hedged || 0);
+            if (availableToHedge > 0) {
+              const portion = Math.ceil(availableToHedge * 0.5);
+              line.hedged = (line.hedged || 0) + portion;
+              hedgedAmountThisTime += portion;
+            }
+          }
+        });
+      });
+
+      showToast(`ส่งต่อยอดเลข ${number} (${formatTypeName(type)}) ออกเจ้าใหญ่จำนวน ฿${hedgedAmountThisTime.toLocaleString()}`);
+      updateAllSystemViews();
+    }
+
+    function autoHedgeOverlimit() {
+      const { list } = getAggregateExposureData();
+      const criticals = list.filter(i => i.riskLevel === 'CRITICAL');
+
+      if (criticals.length === 0) {
+        showToast('ไม่มีตัวเลขที่เกินเพดานความเสี่ยงในขณะนี้');
+        return;
+      }
+
+      criticals.forEach(crit => {
+        const excessLiability = crit.maxLiability - crit.cap;
+        const excessAmountNeeded = Math.ceil(excessLiability / crit.rate);
+
+        let needed = excessAmountNeeded;
+        tickets.forEach(t => {
+          t.items.forEach(line => {
+            if (line.type === crit.type && line.number === crit.number && needed > 0) {
+              const free = line.amount - (line.hedged || 0);
+              const deduct = Math.min(free, needed);
+              line.hedged = (line.hedged || 0) + deduct;
+              needed -= deduct;
+            }
+          });
+        });
+      });
+
+      showToast(`ทำการ Auto-Hedge ระบายความเสี่ยงส่วนเกิน ${criticals.length} รายการแล้ว`);
+      updateAllSystemViews();
+    }
+
+    function renderCappedTable() {
+      const tbody = document.getElementById('cappedTableBody');
+      const halfEl = document.getElementById('cappedHalfCount');
+      const closedEl = document.getElementById('cappedClosedCount');
+      const customEl = document.getElementById('cappedCustomCount');
+
+      const halfCount = cappedNumbers.filter(c => c.action === 'HALF_PAY').length;
+      const closedCount = cappedNumbers.filter(c => c.action === 'CLOSED').length;
+      const customCount = cappedNumbers.filter(c => c.action === 'CUSTOM_RATE').length;
+
+      halfEl.innerText = `${halfCount} ตัวเลข`;
+      closedEl.innerText = `${closedCount} ตัวเลข`;
+      customEl.innerText = `${customCount} ตัวเลข`;
+
+      if (cappedNumbers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-slate-500 font-sans">ยังไม่มีการกำหนดเลขอั้นประจำงวดนี้</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = cappedNumbers.map(item => {
+        let actionTag = '';
+        let rateText = '';
+
+        if (item.action === 'HALF_PAY') {
+          actionTag = `<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">จ่ายครึ่งราคา (50%)</span>`;
+          rateText = `<span class="text-amber-400">บาทละ ${item.rate}</span>`;
+        } else if (item.action === 'CLOSED') {
+          actionTag = `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold">งดรับแทงเด็ดขาด</span>`;
+          rateText = `<span class="text-rose-400 font-bold">ปิดรับ (0)</span>`;
+        } else if (item.action === 'CUSTOM_RATE') {
+          actionTag = `<span class="px-2 py-0.5 rounded text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30">อัตราจ่ายเฉพาะ</span>`;
+          rateText = `<span class="text-purple-400 font-bold">บาทละ ${item.rate}</span>`;
+        }
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="py-2.5 px-3 font-bold text-white text-sm">${item.number}</td>
+            <td class="py-2.5 px-3 text-slate-400 font-sans">${item.type === '2_DIGIT' ? '2 ตัวบน-ล่าง' : formatTypeName(item.type)}</td>
+            <td class="py-2.5 px-3">${actionTag}</td>
+            <td class="py-2.5 px-3 text-right">${rateText}</td>
+            <td class="py-2.5 px-3 text-slate-300 font-sans">${item.reason || '-'}</td>
+            <td class="py-2.5 px-3 text-center">
+              <button onclick="deleteCappedNumber('${item.id}')" class="text-slate-400 hover:text-rose-400 p-1 rounded transition">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function openAddCappedModal() {
+      document.getElementById('modalCappedNumber').value = '';
+      document.getElementById('modalCappedType').value = '2_DIGIT';
+      document.getElementById('modalCappedAction').value = 'HALF_PAY';
+      document.getElementById('modalCappedCustomRate').value = '';
+      document.getElementById('modalCappedReason').value = '';
+      handleCappedActionChange();
+      document.getElementById('cappedModal').classList.remove('hidden');
+    }
+
+    function closeCappedModal() {
+      document.getElementById('cappedModal').classList.add('hidden');
+    }
+
+    function handleCappedActionChange() {
+      const action = document.getElementById('modalCappedAction').value;
+      const field = document.getElementById('modalCustomRateField');
+      if (action === 'CUSTOM_RATE') {
+        field.classList.remove('hidden');
+      } else {
+        field.classList.add('hidden');
+      }
+    }
+
+    function saveCappedNumber() {
+      const num = document.getElementById('modalCappedNumber').value.trim();
+      const type = document.getElementById('modalCappedType').value;
+      const action = document.getElementById('modalCappedAction').value;
+      const reason = document.getElementById('modalCappedReason').value.trim();
+
+      if (!num || isNaN(num)) {
+        showToast('กรุณากรอกตัวเลขให้ถูกต้อง');
+        return;
+      }
+
+      let calcRate = 0;
+      if (action === 'HALF_PAY') {
+        const stdRate = type.includes('3_') ? APP_CONFIG.rates['3_TOP'] : APP_CONFIG.rates['2_TOP'];
+        calcRate = stdRate / 2;
+      } else if (action === 'CUSTOM_RATE') {
+        calcRate = parseFloat(document.getElementById('modalCappedCustomRate').value) || 0;
+      }
+
+      const newCap = {
+        id: `CAP-${Date.now()}`,
+        number: num,
+        type: type,
+        action: action,
+        rate: calcRate,
+        reason: reason || 'กำหนดจากแผงเจ้ามือ'
+      };
+
+      cappedNumbers.unshift(newCap);
+      closeCappedModal();
+      showToast(`บันทึกเลขอั้น ${num} เข้างวดเรียบร้อยแล้ว`);
+      updateAllSystemViews();
+    }
+
+    function deleteCappedNumber(id) {
+      cappedNumbers = cappedNumbers.filter(c => c.id !== id);
+      showToast('ลบรายการเลขอั้นแล้ว');
+      updateAllSystemViews();
+    }
+
+    function renderAgentsTable() {
+      const tbody = document.getElementById('agentsTableBody');
+      const totalStat = document.getElementById('agentTotalStat');
+      const topPerformer = document.getElementById('agentTopPerformer');
+      const totalCommStat = document.getElementById('agentTotalCommStat');
+
+      totalStat.innerText = `${agents.length} คน`;
+
+      // Calculate Agent Ledgers
+      const agentMap = {};
+      agents.forEach(a => {
+        agentMap[a.id] = { turnover: 0, commission: 0, net: 0, count: 0 };
+      });
+
+      tickets.forEach(t => {
+        if (agentMap[t.agentId]) {
+          agentMap[t.agentId].turnover += t.gross;
+          agentMap[t.agentId].net += t.net;
+          agentMap[t.agentId].commission += (t.gross - t.net);
+          agentMap[t.agentId].count += 1;
+        }
+      });
+
+      let topAgent = null;
+      let maxSales = -1;
+      let overallCommission = 0;
+
+      agents.forEach(a => {
+        const metrics = agentMap[a.id];
+        overallCommission += metrics.commission;
+        if (metrics.turnover > maxSales) {
+          maxSales = metrics.turnover;
+          topAgent = a;
+        }
+      });
+
+      topPerformer.innerText = topAgent && maxSales > 0 ? `${topAgent.name} (฿${maxSales.toLocaleString()})` : '-';
+      totalCommStat.innerText = `฿${overallCommission.toLocaleString()}`;
+
+      tbody.innerHTML = agents.map(ag => {
+        const metrics = agentMap[ag.id] || { turnover: 0, net: 0 };
+        const isSuspended = ag.status === 'SUSPENDED';
+
+        const statusTag = isSuspended
+          ? `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30">ระงับรับ</span>`
+          : `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">ปกติ</span>`;
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="py-2.5 px-3 font-bold text-cyan-400">${ag.id}</td>
+            <td class="py-2.5 px-3 text-white font-medium font-sans">${ag.name}</td>
+            <td class="py-2.5 px-3 text-slate-400">${ag.phone || '-'}</td>
+            <td class="py-2.5 px-3 text-right text-indigo-400 font-bold">${ag.commission}%</td>
+            <td class="py-2.5 px-3 text-right text-slate-300">฿${ag.credit.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-slate-100">฿${metrics.turnover.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-emerald-400">฿${metrics.net.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-center">${statusTag}</td>
+            <td class="py-2.5 px-3 text-center space-x-1">
+              <button onclick="openEditAgentModal('${ag.id}')" class="text-slate-400 hover:text-indigo-400 p-1 rounded transition">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function renderAgentSelectOptions() {
+      const select = document.getElementById('agentSelect');
+      if (!select) return;
+      select.innerHTML = agents
+        .filter(a => a.status === 'ACTIVE')
+        .map(a => `<option value="${a.id}">${a.id} (${a.name}) - คอม ${a.commission}%</option>`)
+        .join('');
+    }
+
+    function openAddAgentModal() {
+      document.getElementById('modalAgentTitle').innerHTML = '<i data-lucide="user-plus" class="w-4 h-4 text-cyan-400"></i> เพิ่มตัวแทนจำหน่ายใหม่';
+      document.getElementById('modalAgentEditId').value = '';
+      document.getElementById('modalAgentCode').value = `AG-0${agents.length + 1}`;
+      document.getElementById('modalAgentCode').disabled = false;
+      document.getElementById('modalAgentName').value = '';
+      document.getElementById('modalAgentPhone').value = '';
+      document.getElementById('modalAgentComm').value = APP_CONFIG.defaultCommissionRate * 100;
+      document.getElementById('modalAgentCredit').value = 50000;
+      document.getElementById('modalAgentStatus').value = 'ACTIVE';
+
+      document.getElementById('agentModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function openEditAgentModal(agentId) {
+      const ag = agents.find(a => a.id === agentId);
+      if (!ag) return;
+
+      document.getElementById('modalAgentTitle').innerHTML = '<i data-lucide="edit-3" class="w-4 h-4 text-indigo-400"></i> แก้ไขข้อมูลตัวแทน';
+      document.getElementById('modalAgentEditId').value = ag.id;
+      document.getElementById('modalAgentCode').value = ag.id;
+      document.getElementById('modalAgentCode').disabled = true;
+      document.getElementById('modalAgentName').value = ag.name;
+      document.getElementById('modalAgentPhone').value = ag.phone || '';
+      document.getElementById('modalAgentComm').value = ag.commission;
+      document.getElementById('modalAgentCredit').value = ag.credit;
+      document.getElementById('modalAgentStatus').value = ag.status;
+
+      document.getElementById('agentModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeAgentModal() {
+      document.getElementById('agentModal').classList.add('hidden');
+    }
+
+    function saveAgentData() {
+      const editId = document.getElementById('modalAgentEditId').value;
+      const code = document.getElementById('modalAgentCode').value.trim();
+      const name = document.getElementById('modalAgentName').value.trim();
+      const phone = document.getElementById('modalAgentPhone').value.trim();
+      const comm = parseFloat(document.getElementById('modalAgentComm').value) || 12;
+      const credit = parseFloat(document.getElementById('modalAgentCredit').value) || 50000;
+      const status = document.getElementById('modalAgentStatus').value;
+
+      if (!name) {
+        showToast('กรุณาระบุชื่อตัวแทน');
+        return;
+      }
+
+      if (editId) {
+        // Edit existing
+        const target = agents.find(a => a.id === editId);
+        if (target) {
+          target.name = name;
+          target.phone = phone;
+          target.commission = comm;
+          target.credit = credit;
+          target.status = status;
+        }
+        showToast(`อัปเดตข้อมูลตัวแทน ${editId} เรียบร้อยแล้ว`);
+      } else {
+        // Create new
+        agents.push({
+          id: code || `AG-0${agents.length + 1}`,
+          name: name,
+          phone: phone,
+          commission: comm,
+          credit: credit,
+          status: status
+        });
+        showToast(`เพิ่มตัวแทน ${name} เข้าระบบเรียบร้อยแล้ว`);
+      }
+
+      closeAgentModal();
+      updateAllSystemViews();
+    }
+
+    function renderPeriodsView() {
+      document.getElementById('periodActiveHeading').innerText = currentPeriod.title;
+      document.getElementById('periodActiveSub').innerText = `สร้างเมื่อ: ${currentPeriod.createdDate} | จำนวนโพยสะสม: ${tickets.length} ใบ`;
+      document.getElementById('headerPeriodTitle').innerText = currentPeriod.title.replace('งวดประจำวันที่ ', '');
+      document.getElementById('sidebarPeriodName').innerText = currentPeriod.title.replace('งวดประจำวันที่ ', '');
+
+      const isIntakeOpen = currentPeriod.status === 'OPEN';
+      const statusPill = document.getElementById('periodStatusPill');
+      const toggleBtn = document.getElementById('btnToggleIntake');
+      const toggleText = document.getElementById('btnToggleIntakeText');
+      const headerPill = document.getElementById('headerIntakeStatusPill');
+      const headerText = document.getElementById('headerIntakeStatusText');
+      const sidebarDot = document.getElementById('sidebarStatusDot');
+      const sidebarBadge = document.getElementById('sidebarPeriodStatusBadge');
+      const terminalBadge = document.getElementById('terminalIntakeBadge');
+
+      if (isIntakeOpen) {
+        statusPill.innerText = 'เปิดรับแทงปกติ';
+        statusPill.className = 'text-emerald-400 font-bold mt-1 block';
+
+        toggleBtn.className = 'px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition bg-amber-600/30 hover:bg-amber-600 text-amber-200 hover:text-white border border-amber-500/40';
+        toggleText.innerText = 'ปิดรับแทงชั่วคราว';
+
+        headerPill.className = 'flex items-center gap-1.5 text-xs font-mono bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2.5 py-1.5 rounded-lg';
+        headerText.innerText = 'เปิดรับแทงปกติ';
+
+        sidebarDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+        sidebarBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+        sidebarBadge.innerText = 'เปิดรับ';
+
+        terminalBadge.className = 'text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-3 py-1 rounded-full font-mono';
+        terminalBadge.innerText = 'ระบบเปิดรับโพย';
+      } else {
+        statusPill.innerText = 'ปิดรับแทงชั่วคราว';
+        statusPill.className = 'text-rose-400 font-bold mt-1 block';
+
+        toggleBtn.className = 'px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition bg-emerald-600/30 hover:bg-emerald-600 text-emerald-200 hover:text-white border border-emerald-500/40';
+        toggleText.innerText = 'เปิดรับแทงอีกครั้ง';
+
+        headerPill.className = 'flex items-center gap-1.5 text-xs font-mono bg-rose-500/10 border border-rose-500/30 text-rose-400 px-2.5 py-1.5 rounded-lg';
+        headerText.innerText = 'งดรับแทง (ปิดแผง)';
+
+        sidebarDot.className = 'w-2 h-2 rounded-full bg-rose-400';
+        sidebarBadge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/30';
+        sidebarBadge.innerText = 'ปิดแผง';
+
+        terminalBadge.className = 'text-xs bg-rose-500/10 border border-rose-500/30 text-rose-300 px-3 py-1 rounded-full font-mono';
+        terminalBadge.innerText = 'ระบบปิดรับแทงชั่วคราว';
+      }
+
+      // Render History Table
+      const historyTbody = document.getElementById('periodHistoryTableBody');
+      if (periodHistory.length === 0) {
+        historyTbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500 font-sans">ยังไม่มีประวัติงวดที่ปิด</td></tr>`;
+      } else {
+        historyTbody.innerHTML = periodHistory.map(h => `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="py-2.5 px-3 font-semibold text-white">${h.title}</td>
+            <td class="py-2.5 px-3 text-emerald-400 font-bold">${h.prize1 || '-'}</td>
+            <td class="py-2.5 px-3 text-cyan-400 font-bold">${h.twoBot || '-'}</td>
+            <td class="py-2.5 px-3 text-right text-slate-200">฿${h.turnover.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right text-rose-400">฿${h.payout.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-bold ${h.netPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+              ${h.netPnL >= 0 ? '+' : ''}฿${h.netPnL.toLocaleString()}
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 font-mono">ตัดยอดแล้ว</span>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      lucide.createIcons();
+    }
+
+    function toggleIntakeStatus() {
+      currentPeriod.status = currentPeriod.status === 'OPEN' ? 'CLOSED' : 'OPEN';
+      showToast(currentPeriod.status === 'OPEN' ? 'เปิดระบบรับแทงตามปกติแล้ว' : 'ปิดรับแทงชั่วคราวแล้ว');
+      renderPeriodsView();
+    }
+
+    function openNewPeriodModal() {
+      document.getElementById('newPeriodModal').classList.remove('hidden');
+    }
+
+    function closeNewPeriodModal() {
+      document.getElementById('newPeriodModal').classList.add('hidden');
+    }
+
+    function confirmLaunchNewPeriod() {
+      const title = document.getElementById('modalNewPeriodTitle').value.trim();
+      const drawDate = document.getElementById('modalNewPeriodDate').value;
+      const keepCapped = document.getElementById('modalKeepCappedNumbers').checked;
+      const autoArchive = document.getElementById('modalArchiveCurrentCheck').checked;
+
+      if (!title) {
+        showToast('กรุณาระบุชื่องวดใหม่');
+        return;
+      }
+
+      // If user opted to archive current round before wiping
+      if (autoArchive) {
+        archiveCurrentSettledPeriod(false);
+      }
+
+      // Reset tickets state for the new period
+      tickets = [];
+      ticketCounter = 1001;
+
+      if (!keepCapped) {
+        cappedNumbers = [];
+      }
+
+      currentPeriod = {
+        id: `PR-${drawDate || Date.now()}`,
+        title: title,
+        drawDate: drawDate,
+        status: 'OPEN',
+        createdDate: new Date().toLocaleString('th-TH')
+      };
+
+      document.getElementById('settlementResultSection').classList.add('hidden');
+      closeNewPeriodModal();
+      showToast(`เปิดกระดานสำหรับ ${title} เรียบร้อยแล้ว`);
+      updateAllSystemViews();
+    }
+
+    function archiveCurrentSettledPeriod(notify = true) {
+      const { totalSales } = getAggregateExposureData();
+      const totalCommission = calculateTotalAgentCommission();
+      let totalPayout = 0;
+
+      tickets.forEach(t => {
+        t.items.forEach(i => {
+          if (i.isWin) totalPayout += (i.winAmount || 0);
+        });
+      });
+
+      const netPnL = totalSales - totalCommission - totalPayout;
+      const prize1 = document.getElementById('drawPrize1').value || '-';
+      const twoBot = document.getElementById('drawTwoBot').value || '-';
+
+      periodHistory.unshift({
+        id: currentPeriod.id,
+        title: currentPeriod.title,
+        drawDate: currentPeriod.drawDate,
+        prize1: prize1,
+        twoBot: twoBot,
+        turnover: totalSales,
+        payout: totalPayout,
+        netPnL: netPnL,
+        status: 'ARCHIVED'
+      });
+
+      if (notify) showToast(`บันทึกข้อมูล ${currentPeriod.title} ลงสมุดประวัติแล้ว`);
+      renderPeriodsView();
+    }
+
+    function renderTicketsTable() {
+      const tbody = document.getElementById('ticketListBody');
+      const search = document.getElementById('ticketSearchInput')?.value.trim().toLowerCase() || '';
+      const filter = document.getElementById('ticketStatusFilter')?.value || 'ALL';
+
+      let filtered = tickets.filter(t => {
+        if (filter !== 'ALL' && t.status !== filter) return false;
+        if (search) {
+          const matchId = t.id.toLowerCase().includes(search);
+          const matchNum = t.items.some(i => i.number.includes(search));
+          const matchAg = t.agent.toLowerCase().includes(search);
+          return matchId || matchNum || matchAg;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-slate-500 font-sans">ไม่พบรายการโพย</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(t => {
+        let statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">รอผลรางวัล</span>`;
+        if (t.status === 'WON') {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">ถูกรางวัล</span>`;
+        } else if (t.status === 'LOST') {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] bg-slate-800/80 text-slate-500">ไม่ถูกรางวัล</span>`;
+        }
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="py-2.5 px-3 font-bold text-indigo-400">${t.id}</td>
+            <td class="py-2.5 px-3 text-slate-500">${t.time}</td>
+            <td class="py-2.5 px-3 text-slate-300 font-sans">${t.agent}</td>
+            <td class="py-2.5 px-3 text-slate-400">${t.items.length} รายการ</td>
+            <td class="py-2.5 px-3 text-right text-slate-200">฿${t.gross.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-semibold text-emerald-400">฿${t.net.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-center">${statusBadge}</td>
+            <td class="py-2.5 px-3 text-center">
+              <button onclick="openTicketDetailModal('${t.id}')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-[10px]">
+                ดูโพย
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openTicketDetailModal(ticketId) {
+      const ticket = tickets.find(t => t.id === ticketId);
+      if (!ticket) return;
+
+      document.getElementById('modalTicketId').innerText = `${ticket.id} (${ticket.agent})`;
+      document.getElementById('modalTicketMeta').innerText = `เวลาบันทึก: ${ticket.time} | สถานะ: ${ticket.status}`;
+      document.getElementById('modalTicketGross').innerText = `฿${ticket.gross.toLocaleString()}`;
+      document.getElementById('modalTicketNet').innerText = `฿${ticket.net.toLocaleString()}`;
+
+      const tbody = document.getElementById('modalTicketItemsBody');
+      tbody.innerHTML = ticket.items.map(i => {
+        let win = '<span class="text-slate-500">รอผล</span>';
+        if (i.isWin === true) win = `<span class="text-emerald-400 font-bold">+฿${i.winAmount.toLocaleString()}</span>`;
+        else if (i.isWin === false) win = `<span class="text-slate-600">ไม่ถูก</span>`;
+
+        return `
+          <tr class="hover:bg-slate-950/50">
+            <td class="py-2 px-3 text-slate-400 font-sans">${formatTypeName(i.type)}</td>
+            <td class="py-2 px-3 font-bold text-white">${i.number} ${i.isCapped ? '<span class="text-[9px] text-amber-400">(' + i.capInfo + ')</span>' : ''}</td>
+            <td class="py-2 px-3 text-right text-slate-200">฿${i.amount.toLocaleString()}</td>
+            <td class="py-2 px-3 text-right text-slate-400">x${i.rate}</td>
+            <td class="py-2 px-3 text-center">${win}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('ticketModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeTicketModal() {
+      document.getElementById('ticketModal').classList.add('hidden');
+    }
+
+    function fillRandomDrawResults() {
+      let r1 = '';
+      for (let i = 0; i < 6; i++) r1 += Math.floor(Math.random() * 10);
+      let r2 = '';
+      for (let i = 0; i < 2; i++) r2 += Math.floor(Math.random() * 10);
+
+      document.getElementById('drawPrize1').value = r1;
+      document.getElementById('drawTwoBot').value = r2;
+      showToast('จำลองสุ่มตัวเลขรางวัลเรียบร้อย');
+    }
+
+    function executeSettlement() {
+      const prize1 = document.getElementById('drawPrize1').value.trim();
+      const twoBot = document.getElementById('drawTwoBot').value.trim();
+
+      if (prize1.length !== 6 || twoBot.length !== 2) {
+        showToast('กรุณากรอกผลรางวัลที่ 1 (6 ตัว) และ 2 ตัวล่าง (2 ตัว) ให้ถูกต้อง');
+        return;
+      }
+
+      const threeTop = prize1.slice(-3);
+      const twoTop = prize1.slice(-2);
+      const threeTopPerms = getPermutations(threeTop);
+
+      let totalSales = 0;
+      let totalPayout = 0;
+      let winningLines = [];
+
+      tickets.forEach(ticket => {
+        totalSales += ticket.gross;
+        let ticketHasWin = false;
+
+        ticket.items.forEach(line => {
+          let won = false;
+
+          switch (line.type) {
+            case '3_TOP':
+              if (line.number === threeTop) won = true;
+              break;
+            case '3_TOD':
+              if (threeTopPerms.includes(line.number)) won = true;
+              break;
+            case '2_TOP':
+              if (line.number === twoTop) won = true;
+              break;
+            case '2_BOT':
+              if (line.number === twoBot) won = true;
+              break;
+            case 'RUN_TOP':
+              if (threeTop.includes(line.number)) won = true;
+              break;
+            case 'RUN_BOT':
+              if (twoBot.includes(line.number)) won = true;
+              break;
+          }
+
+          line.isWin = won;
+          if (won) {
+            ticketHasWin = true;
+            const effectiveBet = Math.max(0, line.amount - (line.hedged || 0));
+            // Multiplied by actual line.rate (which already accounts for capped half-pay or custom)
+            line.winAmount = effectiveBet * line.rate;
+            totalPayout += line.winAmount;
+
+            winningLines.push({
+              ticketId: ticket.id,
+              type: line.type,
+              number: line.number,
+              amount: line.amount,
+              hedged: line.hedged || 0,
+              rate: line.rate,
+              isCapped: line.isCapped,
+              capInfo: line.capInfo,
+              winAmount: line.winAmount
+            });
+          } else {
+            line.winAmount = 0;
+          }
+        });
+
+        ticket.status = ticketHasWin ? 'WON' : 'LOST';
+      });
+
+      const totalCommission = calculateTotalAgentCommission();
+      const netPnL = totalSales - totalCommission - totalPayout;
+
+      // Update Statement UI
+      document.getElementById('stmtTurnover').innerText = `฿${totalSales.toLocaleString()}`;
+      document.getElementById('stmtCommission').innerText = `-฿${totalCommission.toLocaleString()}`;
+      document.getElementById('stmtPayout').innerText = `-฿${totalPayout.toLocaleString()}`;
+
+      const pnlEl = document.getElementById('stmtNetPnL');
+      pnlEl.innerText = `${netPnL >= 0 ? '+' : ''}฿${netPnL.toLocaleString()}`;
+      pnlEl.className = `text-2xl font-bold font-mono mt-1 block ${netPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      // Winning table
+      document.getElementById('winningItemsCount').innerText = `${winningLines.length} รายการ`;
+      const winTbody = document.getElementById('winningTicketsBody');
+
+      if (winningLines.length === 0) {
+        winTbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-slate-500 font-sans">งวดนี้ไม่มีโพยที่ถูกรางวัล เจ้ามือกินเรียบ</td></tr>`;
+      } else {
+        winTbody.innerHTML = winningLines.map(w => `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="py-2.5 px-3 font-bold text-indigo-400">${w.ticketId}</td>
+            <td class="py-2.5 px-3 text-slate-400 font-sans">${formatTypeName(w.type)}</td>
+            <td class="py-2.5 px-3 text-white font-bold">${w.number} ${w.isCapped ? '<span class="text-[9px] text-amber-400 font-normal">(' + w.capInfo + ')</span>' : ''}</td>
+            <td class="py-2.5 px-3 text-right text-slate-200">฿${w.amount.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right text-slate-400 font-mono">x${w.rate}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-emerald-400">+฿${w.winAmount.toLocaleString()}</td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('settlementResultSection').classList.remove('hidden');
+      updateAllSystemViews();
+      showToast('ประมวลผลตัดยอดงวดเสร็จสิ้นแล้ว');
+    }
+
+    function updateCharts() {
+      const { list } = getAggregateExposureData();
+
+      // Chart 1: Top 5 Highest Liabilities
+      const top5 = list.slice(0, 5);
+      const topLabels = top5.map(i => `${i.number} (${formatTypeName(i.type)})`);
+      const topValues = top5.map(i => i.maxLiability);
+
+      const ctxTop = document.getElementById('chartTopExposure');
+      if (ctxTop) {
+        if (chartTopExposureInstance) chartTopExposureInstance.destroy();
+        chartTopExposureInstance = new Chart(ctxTop, {
+          type: 'bar',
+          data: {
+            labels: topLabels.length > 0 ? topLabels : ['ไม่มีข้อมูล'],
+            datasets: [{
+              label: 'ภาระจ่ายสูงสุด (บาท)',
+              data: topValues.length > 0 ? topValues : [0],
+              backgroundColor: ['#f43f5e', '#fb923c', '#fbbf24', '#6366f1', '#38bdf8'],
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              y: {
+                grid: { color: '#1e293b' },
+                ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+              },
+              x: {
+                grid: { display: false },
+                ticks: { color: '#94a3b8', font: { family: 'Prompt', size: 11 } }
+              }
+            }
+          }
+        });
+      }
+
+      // Chart 2: Type Distribution
+      const typeSums = {
+        '3_TOP': 0,
+        '3_TOD': 0,
+        '2_TOP': 0,
+        '2_BOT': 0,
+        'RUN': 0
+      };
+
+      tickets.forEach(t => {
+        t.items.forEach(i => {
+          if (i.type === 'RUN_TOP' || i.type === 'RUN_BOT') typeSums['RUN'] += i.amount;
+          else if (typeSums[i.type] !== undefined) typeSums[i.type] += i.amount;
+        });
+      });
+
+      const ctxType = document.getElementById('chartTypeDistribution');
+      if (ctxType) {
+        if (chartTypeDistInstance) chartTypeDistInstance.destroy();
+        chartTypeDistInstance = new Chart(ctxType, {
+          type: 'doughnut',
+          data: {
+            labels: ['3 ตัวบน', '3 ตัวโต๊ด', '2 ตัวบน', '2 ตัวล่าง', 'เลขวิ่ง'],
+            datasets: [{
+              data: Object.values(typeSums),
+              backgroundColor: ['#6366f1', '#a855f7', '#ec4899', '#06b6d4', '#10b981'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            cutout: '70%'
+          }
+        });
+
+        // Custom Legend Render
+        const legendContainer = document.getElementById('chartLegendCustom');
+        if (legendContainer) {
+          legendContainer.innerHTML = `
+            <div><span class="text-indigo-400">●</span> 3บน: ฿${typeSums['3_TOP'].toLocaleString()}</div>
+            <div><span class="text-purple-400">●</span> โต๊ด: ฿${typeSums['3_TOD'].toLocaleString()}</div>
+            <div><span class="text-pink-400">●</span> 2บน: ฿${typeSums['2_TOP'].toLocaleString()}</div>
+            <div><span class="text-cyan-400">●</span> 2ล่าง: ฿${typeSums['2_BOT'].toLocaleString()}</div>
+            <div><span class="text-emerald-400">●</span> วิ่ง: ฿${typeSums['RUN'].toLocaleString()}</div>
+          `;
+        }
+      }
+    }
+
+    function injectSimulatedBurst() {
+      if (currentPeriod.status !== 'OPEN') {
+        showToast('งวดปิดรับแทงอยู่ ไม่สามารถยิงยอดแทงจำลองได้');
+        return;
+      }
+
+      const luckyNumbers = ['746', '843', '596', '82', '46', '96', '88'];
+      const types = ['3_TOP', '3_TOD', '2_TOP', '2_BOT', 'RUN_TOP'];
+      
+      for (let i = 0; i < 4; i++) {
+        const ag = agents[Math.floor(Math.random() * agents.length)];
+        const items = [];
+        const linesCount = 2 + Math.floor(Math.random() * 3);
+
+        for (let j = 0; j < linesCount; j++) {
+          const t = types[Math.floor(Math.random() * types.length)];
+          const n = luckyNumbers[Math.floor(Math.random() * luckyNumbers.length)];
+          const amt = [100, 200, 500, 1000][Math.floor(Math.random() * 4)];
+          
+          const capRule = findCappedRule(n, t);
+          let rate = APP_CONFIG.rates[t];
+          let isCapped = false;
+          let capInfo = 'ปกติ';
+
+          if (capRule) {
+            if (capRule.action === 'CLOSED') continue;
+            if (capRule.action === 'HALF_PAY') { rate = rate / 2; isCapped = true; capInfo = 'อั้นจ่ายครึ่ง'; }
+            if (capRule.action === 'CUSTOM_RATE') { rate = capRule.rate; isCapped = true; capInfo = `เรตพิเศษ`; }
+          }
+
+          items.push({
+            type: t,
+            number: n,
+            amount: amt,
+            rate: rate,
+            isCapped: isCapped,
+            capInfo: capInfo,
+            hedged: 0,
+            isWin: null,
+            winAmount: 0
+          });
+        }
+
+        if (items.length === 0) continue;
+
+        const gross = items.reduce((a, b) => a + b.amount, 0);
+        const commRate = (ag.commission || 12) / 100;
+        tickets.unshift({
+          id: `TK-${ticketCounter++}`,
+          time: new Date().toLocaleTimeString('th-TH', { hour12: false }),
+          agentId: ag.id,
+          agent: `${ag.id} (${ag.name})`,
+          gross: gross,
+          net: gross * (1 - commRate),
+          status: 'WAITING',
+          items: items
+        });
+      }
+
+      showToast('จำลองยิงยอด Burst Traffic เพิ่ม 4 โพยเรียบร้อย!');
+      updateAllSystemViews();
+    }
+
+    function resetToInitialMockData() {
+      tickets = getInitialMockTickets();
+      ticketCounter = 1005;
+      document.getElementById('settlementResultSection').classList.add('hidden');
+      updateAllSystemViews();
+      showToast('คืนค่าข้อมูลจำลองเริ่มต้นเรียบร้อย');
+    }
+
+    // Sliders & Policy settings event listeners
+    document.getElementById('capSlider3Top')?.addEventListener('input', (e) => {
+      document.getElementById('capDisplay3Top').innerText = `฿${parseInt(e.target.value).toLocaleString()}`;
+    });
+    document.getElementById('capSlider2Digit')?.addEventListener('input', (e) => {
+      document.getElementById('capDisplay2Digit').innerText = `฿${parseInt(e.target.value).toLocaleString()}`;
+    });
+
+    function saveSystemSettings() {
+      APP_CONFIG.rates['3_TOP'] = parseFloat(document.getElementById('rate_3_TOP').value);
+      APP_CONFIG.rates['3_TOD'] = parseFloat(document.getElementById('rate_3_TOD').value);
+      APP_CONFIG.rates['2_TOP'] = parseFloat(document.getElementById('rate_2_DIGIT').value);
+      APP_CONFIG.rates['2_BOT'] = parseFloat(document.getElementById('rate_2_DIGIT').value);
+      APP_CONFIG.rates['RUN_TOP'] = parseFloat(document.getElementById('rate_RUN_TOP').value);
+      APP_CONFIG.rates['RUN_BOT'] = parseFloat(document.getElementById('rate_RUN_BOT').value);
+
+      APP_CONFIG.caps['3_TOP'] = parseInt(document.getElementById('capSlider3Top').value);
+      APP_CONFIG.caps['2_DIGIT'] = parseInt(document.getElementById('capSlider2Digit').value);
+      APP_CONFIG.defaultCommissionRate = (parseFloat(document.getElementById('settingCommissionRate').value) || 12) / 100;
+
+      showToast('บันทึกการตั้งค่านโยบายและเพดานความเสี่ยงแล้ว');
+      updateAllSystemViews();
+    }
+
+    // Mobile Menu Toggle
+    document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+      const nav = document.getElementById('navMenu');
+      nav.classList.toggle('hidden');
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      resetToInitialMockData();
+      renderAgentSelectOptions();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

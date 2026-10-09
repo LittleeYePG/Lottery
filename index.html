@@ -10,155 +10,186 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Prompt', sans-serif; }
-    .badge { display: inline-flex; align-items: center; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+    .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 500; }
+    
+    /* PRINT SYSTEM FIX (A4 & Thermal 80mm) */
+    #print-area { display: none; }
+    @media print {
+      body * { visibility: hidden !important; }
+      #print-area, #print-area * { 
+        visibility: visible !important; 
+      }
+      #print-area {
+        display: block !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 99999 !important;
+      }
+    }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex antialiased">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex antialiased overflow-x-hidden text-base">
+
+  <!-- Mobile/Tablet Sidebar Backdrop Overlay -->
+  <div id="sidebar-backdrop" onclick="toggleSidebar(false)" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity"></div>
 
   <!-- ================= LEFT SIDEBAR ================= -->
-  <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0">
-    <div>
-      <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-800">
-        <i data-lucide="shield-alert" class="w-7 h-7 text-amber-500"></i>
-        <div>
-          <h1 class="font-bold text-base leading-tight text-white">LOTTO ENGINE</h1>
-          <p class="text-[11px] text-slate-400">Bookmaker Simulator v2.5</p>
+  <aside id="main-sidebar" class="fixed lg:static top-0 left-0 bottom-0 z-50 w-72 lg:w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+    <div class="overflow-y-auto">
+      <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <i data-lucide="shield-alert" class="w-7 h-7 text-amber-500"></i>
+          <div>
+            <h1 class="font-bold text-lg leading-tight text-white">LOTTO ENGINE</h1>
+            <p class="text-xs text-slate-400">ระบบจำลองเจ้ามือหวย v3.0</p>
+          </div>
         </div>
+        <button onclick="toggleSidebar(false)" class="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
       </div>
 
       <!-- Active Period Status Widget -->
-      <div class="p-4 mx-3 my-3 rounded-lg bg-slate-900 border border-slate-800">
-        <div class="text-[11px] text-slate-400 flex items-center justify-between mb-1">
+      <div class="p-4 mx-3 my-3 rounded-xl bg-slate-900 border border-slate-800">
+        <div class="text-xs text-slate-400 flex items-center justify-between mb-1.5">
           <span>สถานะงวดปัจจุบัน</span>
           <span id="sidebar-period-badge" class="badge bg-red-950 text-red-400 border border-red-800">ยังไม่เปิดงวด</span>
         </div>
-        <div id="sidebar-period-name" class="font-semibold text-sm text-slate-200">ไม่มีงวดที่เปิดรับ</div>
-        <div id="sidebar-period-time" class="text-xs text-slate-500 mt-0.5">-</div>
+        <div id="sidebar-period-name" class="font-bold text-base text-slate-100">ไม่มีงวดที่เปิดรับ</div>
+        <div id="sidebar-period-time" class="text-xs text-slate-400 mt-0.5">-</div>
       </div>
 
       <!-- Navigation Links -->
-      <nav class="px-3 space-y-1">
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-amber-400 bg-slate-800/80">
-          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> ภาพรวมงวดปัจจุบัน
+      <nav class="px-3 space-y-1.5 pb-4">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-base font-medium transition text-amber-400 bg-slate-800/80">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i> ภาพรวมงวดปัจจุบัน
         </button>
-        <button onclick="switchTab('entry')" id="nav-entry" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i data-lucide="receipt-text" class="w-4 h-4"></i> คีย์โพยด่วน (Terminal)
+        <button onclick="switchTab('entry')" id="nav-entry" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-base font-medium transition text-slate-300 hover:text-white hover:bg-slate-900">
+          <i data-lucide="receipt-text" class="w-5 h-5"></i> คีย์โพยด่วน (Tablet)
         </button>
-        <button onclick="switchTab('risk')" id="nav-risk" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i data-lucide="trending-up" class="w-4 h-4"></i> บริหารความเสี่ยง (Risk Matrix)
+        <button onclick="switchTab('risk')" id="nav-risk" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-base font-medium transition text-slate-300 hover:text-white hover:bg-slate-900">
+          <i data-lucide="trending-up" class="w-5 h-5"></i> บริหารความเสี่ยง
         </button>
-        <button onclick="switchTab('capped')" id="nav-capped" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i data-lucide="ban" class="w-4 h-4"></i> จัดการเลขอั้น / เรตพิเศษ
+        <button onclick="switchTab('capped')" id="nav-capped" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-base font-medium transition text-slate-300 hover:text-white hover:bg-slate-900">
+          <i data-lucide="ban" class="w-5 h-5"></i> จัดการเลขอั้น / เรตพิเศษ
         </button>
-        <button onclick="switchTab('agents')" id="nav-agents" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i data-lucide="users" class="w-4 h-4"></i> ทะเบียนตัวแทนจำหน่าย
+        <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-base font-medium transition text-slate-300 hover:text-white hover:bg-slate-900">
+          <i data-lucide="settings-2" class="w-5 h-5"></i> อัตราจ่าย & เพดานเสี่ยง
         </button>
-        <button onclick="switchTab('period')" id="nav-period" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i data-lucide="calendar" class="w-4 h-4"></i> จัดการงวด / ปิดงวด
+        <button onclick="switchTab('agents')" id="nav-agents" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-base font-medium transition text-slate-300 hover:text-white hover:bg-slate-900">
+          <i data-lucide="users" class="w-5 h-5"></i> ทะเบียนตัวแทนจำหน่าย
         </button>
-        <button onclick="switchTab('settlement')" id="nav-settlement" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i data-lucide="trophy" class="w-4 h-4"></i> ออกรางวัล & ตัดยอด
+        <button onclick="switchTab('period')" id="nav-period" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-base font-medium transition text-slate-300 hover:text-white hover:bg-slate-900">
+          <i data-lucide="calendar" class="w-5 h-5"></i> จัดการงวด / ปิดงวด
         </button>
-        <button onclick="switchTab('history')" id="nav-history" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-900">
-          <i data-lucide="archive" class="w-4 h-4"></i> คลังข้อมูลย้อนหลัง
+        <button onclick="switchTab('settlement')" id="nav-settlement" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-base font-medium transition text-slate-300 hover:text-white hover:bg-slate-900">
+          <i data-lucide="trophy" class="w-5 h-5"></i> ออกรางวัล & ตัดยอด
+        </button>
+        <button onclick="switchTab('history')" id="nav-history" class="nav-btn w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-base font-medium transition text-slate-300 hover:text-white hover:bg-slate-900">
+          <i data-lucide="archive" class="w-5 h-5"></i> คลังข้อมูลย้อนหลัง
         </button>
       </nav>
     </div>
 
-    <!-- Bottom Actions -->
-    <div class="p-4 border-t border-slate-800 text-xs text-slate-500">
-      <div class="flex items-center justify-between mb-2">
+    <div class="p-4 border-t border-slate-800 text-xs text-slate-400 shrink-0">
+      <div class="flex items-center justify-between mb-2 font-mono">
         <span>โหมดทดสอบ</span>
-        <span class="text-emerald-400 font-mono">SANDBOX</span>
+        <span class="text-emerald-400 font-bold">SANDBOX</span>
       </div>
-      <button onclick="resetEntireSandbox()" class="w-full py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-red-400 border border-slate-800 rounded transition text-center flex items-center justify-center gap-1.5">
-        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> รีเซ็ตข้อมูลทั้งหมด
+      <button onclick="resetEntireSandbox()" class="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-red-400 border border-slate-800 rounded-xl transition text-center flex items-center justify-center gap-2">
+        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> รีเซ็ตข้อมูลทั้งหมด
       </button>
     </div>
   </aside>
 
   <!-- ================= MAIN CONTENT WRAPPER ================= -->
-  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+  <main class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
     <!-- Top Header Bar -->
-    <header class="h-16 bg-slate-950 border-b border-slate-800 px-8 flex items-center justify-between sticky top-0 z-30">
-      <div class="flex items-center gap-4">
-        <h2 id="page-title" class="font-bold text-lg text-white">ภาพรวมงวดปัจจุบัน</h2>
-        <span id="period-status-chip" class="badge bg-red-950 text-red-400 border border-red-800">ไม่มีงวดที่เปิดรับ</span>
-      </div>
+    <header class="h-16 bg-slate-950 border-b border-slate-800 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30 shrink-0">
       <div class="flex items-center gap-3">
-        <button id="topbar-open-period-btn" onclick="openNewPeriodModal()" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold rounded-lg text-xs flex items-center gap-1.5 transition">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i> เปิดงวดใหม่
+        <button onclick="toggleSidebar(true)" class="lg:hidden p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 focus:outline-none">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+        <h2 id="page-title" class="font-bold text-lg sm:text-xl text-white truncate">ภาพรวมงวดปัจจุบัน</h2>
+        <span id="period-status-chip" class="hidden sm:inline-flex badge bg-red-950 text-red-400 border border-red-800">ไม่มีงวดที่เปิดรับ</span>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button id="topbar-open-period-btn" onclick="openNewPeriodModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-sm flex items-center gap-1.5 transition shadow-md shadow-amber-500/20">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> <span>เปิดงวดใหม่</span>
         </button>
       </div>
     </header>
 
     <!-- Notification Bar -->
-    <div id="alert-banner" class="hidden mx-8 mt-4 p-3 rounded-lg border text-sm flex items-center justify-between"></div>
+    <div id="alert-banner" class="hidden mx-4 sm:mx-8 mt-4 p-3.5 rounded-xl border text-sm sm:text-base flex items-center justify-between"></div>
 
-    <div class="p-8 space-y-6">
+    <div class="p-4 sm:p-8 space-y-6 flex-1">
 
       <!-- ================= 1. TAB: DASHBOARD ================= -->
       <section id="tab-dashboard" class="space-y-6">
-        <!-- Banner if no active period -->
-        <div id="no-active-period-alert" class="p-6 bg-slate-950 border border-dashed border-amber-600/40 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
-          <div class="flex items-center gap-4">
+        <div id="no-active-period-alert" class="p-5 sm:p-6 bg-slate-950 border border-dashed border-amber-600/40 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex items-start sm:items-center gap-4">
             <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
               <i data-lucide="info" class="w-6 h-6"></i>
             </div>
             <div>
-              <h4 class="font-semibold text-white">ยังไม่มีการเปิดรับแทงงวดปัจจุบัน</h4>
-              <p class="text-sm text-slate-400">คุณสามารถไปที่หน้า "คลังข้อมูลย้อนหลัง" เพื่อดูสถิติงวดก่อนหน้า หรือกดปุ่มเปิดงวดใหม่เพื่อเริ่มคีย์โพย</p>
+              <h4 class="font-bold text-white text-base sm:text-lg">ยังไม่มีการเปิดรับแทงงวดปัจจุบัน</h4>
+              <p class="text-sm sm:text-base text-slate-400">ไปที่เมนู "คลังข้อมูลย้อนหลัง" เพื่อดูสถิติ หรือกดปุ่มเปิดงวดใหม่เพื่อเริ่มคีย์โพย</p>
             </div>
           </div>
-          <button onclick="openNewPeriodModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-sm flex items-center gap-2 whitespace-nowrap shadow-lg shadow-amber-500/10">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i> เปิดงวดใหม่ทันที
+          <button onclick="openNewPeriodModal()" class="w-full md:w-auto px-5 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i> เปิดงวดใหม่ทันที
           </button>
         </div>
 
-        <!-- Metric KPI Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-            <span class="text-xs text-slate-400 font-medium">ยอดรับแทงรวม (Gross Turnover)</span>
-            <div class="text-2xl font-bold text-white mt-1" id="dash-turnover">฿0</div>
-            <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
-              <i data-lucide="receipt" class="w-3.5 h-3.5"></i> <span id="dash-ticket-count">0</span> โพย
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <span class="text-sm text-slate-400 font-medium">ยอดรับแทงรวมทั้งหมด</span>
+            <div class="text-2xl sm:text-3xl font-bold text-white mt-1.5" id="dash-turnover">฿0</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+              <i data-lucide="receipt" class="w-4 h-4"></i> <span id="dash-ticket-count" class="font-bold text-slate-300">0</span> โพย
             </div>
           </div>
-          <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-            <span class="text-xs text-slate-400 font-medium">ยอดส่งต่อเจ้าใหญ่ (Offloaded/Hedged)</span>
-            <div class="text-2xl font-bold text-amber-400 mt-1" id="dash-hedged">฿0</div>
-            <div class="text-[11px] text-slate-500 mt-1">กระจายความเสี่ยงออก</div>
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <span class="text-sm text-slate-400 font-medium">ยอดส่งต่อเจ้าใหญ่ (กระจายเสี่ยง)</span>
+            <div class="text-2xl sm:text-3xl font-bold text-amber-400 mt-1.5" id="dash-hedged">฿0</div>
+            <div class="text-xs text-slate-500 mt-1">ตัดส่วนเกินออก</div>
           </div>
-          <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-            <span class="text-xs text-slate-400 font-medium">ยอดถือสู้สุทธิ (Retained Sales)</span>
-            <div class="text-2xl font-bold text-emerald-400 mt-1" id="dash-retained">฿0</div>
-            <div class="text-[11px] text-slate-500 mt-1">ยอดที่เจ้ามือรับไว้เอง</div>
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <span class="text-sm text-slate-400 font-medium">ยอดถือสู้สุทธิ (เจ้ามือรับเอง)</span>
+            <div class="text-2xl sm:text-3xl font-bold text-emerald-400 mt-1.5" id="dash-retained">฿0</div>
+            <div class="text-xs text-slate-500 mt-1">ยอดรับความเสี่ยงไว้</div>
           </div>
-          <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-            <span class="text-xs text-slate-400 font-medium">ความเสี่ยงสูงสุด (Max Exposure)</span>
-            <div class="text-2xl font-bold text-rose-500 mt-1" id="dash-max-loss">฿0</div>
-            <div class="text-[11px] text-slate-500 mt-1" id="dash-max-loss-num">เลขเสี่ยงสูงสุด: -</div>
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <span class="text-sm text-slate-400 font-medium">ความเสี่ยงจ่ายสูงสุด</span>
+            <div class="text-2xl sm:text-3xl font-bold text-rose-500 mt-1.5" id="dash-max-loss">฿0</div>
+            <div class="text-xs text-slate-500 mt-1 truncate" id="dash-max-loss-num">เลขเสี่ยงสูงสุด: -</div>
           </div>
         </div>
 
-        <!-- Charts Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-            <h3 class="font-semibold text-sm text-slate-200 mb-4 flex items-center justify-between">
-              <span>สัดส่วนยอดขายตามประเภทการแทง</span>
-              <i data-lucide="pie-chart" class="w-4 h-4 text-slate-500"></i>
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <h3 class="font-bold text-base text-slate-200 mb-4 flex items-center justify-between">
+              <span>สัดส่วนยอดขายตามประเภทรางวัล</span>
+              <i data-lucide="pie-chart" class="w-5 h-5 text-slate-500"></i>
             </h3>
             <div class="h-64 flex items-center justify-center">
               <canvas id="betTypeChart"></canvas>
             </div>
           </div>
-          <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-            <h3 class="font-semibold text-sm text-slate-200 mb-4 flex items-center justify-between">
-              <span>5 อันดับเลขเสี่ยงสูงสุด (Top Exposure)</span>
-              <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-500"></i>
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <h3 class="font-bold text-base text-slate-200 mb-4 flex items-center justify-between">
+              <span>5 อันดับเลขเสี่ยงสูงสุด</span>
+              <i data-lucide="bar-chart-3" class="w-5 h-5 text-slate-500"></i>
             </h3>
             <div class="h-64 flex items-center justify-center">
               <canvas id="topExposureChart"></canvas>
@@ -166,162 +197,219 @@
           </div>
         </div>
 
-        <!-- Agent Sales Ranking Table -->
-        <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-          <h3 class="font-semibold text-sm text-slate-200 mb-4">ยอดส่งโพยแยกตามตัวแทนจำหน่าย (Agent Performance)</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+        <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+          <h3 class="font-bold text-base text-slate-200 mb-4">ยอดส่งโพยแยกตามตัวแทนจำหน่าย</h3>
+          <div class="overflow-x-auto -mx-5 sm:mx-0">
+            <table class="w-full text-left text-sm min-w-[600px]">
               <thead class="text-slate-400 bg-slate-900 border-b border-slate-800">
                 <tr>
-                  <th class="p-3">รหัส / ชื่อตัวแทน</th>
-                  <th class="p-3">จำนวนโพย</th>
-                  <th class="p-3 text-right">ยอดแทงรวม</th>
-                  <th class="p-3 text-right">คอมมิชชัน (%)</th>
-                  <th class="p-3 text-right">ยอดหักคอมฯ</th>
-                  <th class="p-3 text-right">ยอดส่งสุทธิ</th>
+                  <th class="p-3.5">ชื่อตัวแทน / สายส่ง</th>
+                  <th class="p-3.5">จำนวนโพย</th>
+                  <th class="p-3.5 text-right">ยอดแทงรวม</th>
+                  <th class="p-3.5 text-right">คอมมิชชัน (%)</th>
+                  <th class="p-3.5 text-right">ยอดหักคอมฯ</th>
+                  <th class="p-3.5 text-right">ยอดส่งสุทธิ</th>
                 </tr>
               </thead>
-              <tbody id="dash-agent-table-body" class="divide-y divide-slate-800">
-                <!-- Dynamically populated -->
-              </tbody>
+              <tbody id="dash-agent-table-body" class="divide-y divide-slate-800"></tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ================= 2. TAB: FAST TICKET ENTRY ================= -->
+      <!-- ================= 2. TAB: FAST TICKET ENTRY (TABLET OPTIMIZED) ================= -->
       <section id="tab-entry" class="hidden space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Left: Terminal Input Form -->
-          <div class="lg:col-span-2 p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Left: Tablet Terminal (7 Cols) -->
+          <div class="lg:col-span-7 p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-3.5 gap-2">
               <div>
-                <h3 class="font-bold text-white flex items-center gap-2">
-                  <i data-lucide="terminal" class="w-5 h-5 text-amber-500"></i> คีย์โพยด่วน (Fast Entry Terminal)
+                <h3 class="font-bold text-white text-lg flex items-center gap-2">
+                  <i data-lucide="tablet" class="w-6 h-6 text-amber-500"></i> คีย์โพยด่วน (Tablet Terminal)
                 </h3>
-                <p class="text-xs text-slate-400 mt-0.5">รองรับคีย์คำสั่งย่อ: 19 ประตู, 6 กลับ, 2 กลับ, วิ่งบน/ล่าง, และ x (บนxล่างxโต๊ด)</p>
+                <p class="text-xs sm:text-sm text-slate-400 mt-0.5">กดแป้นปุ่มตัวเลขและสูตรคำนวณด้านล่างเพื่อบันทึกได้อย่างรวดเร็ว</p>
               </div>
-              <div class="text-right">
-                <span id="terminal-period-tag" class="text-xs font-mono text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded">งวด: -</span>
+              <div>
+                <span id="terminal-period-tag" class="text-xs sm:text-sm font-mono text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20 inline-block font-bold">งวด: -</span>
               </div>
             </div>
 
-            <!-- Agent selector & Customer Name -->
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">เลือกตัวแทนจำหน่าย / สายส่ง</label>
-                <select id="entry-agent-select" onchange="updateAgentCommissionPreview()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
-                  <!-- Populated dynamically -->
-                </select>
+                <label class="block text-xs sm:text-sm font-semibold text-slate-300 mb-1.5">เลือกสายส่ง / ตัวแทนจำหน่าย</label>
+                <select id="entry-agent-select" onchange="updateAgentCommissionPreview()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm sm:text-base text-white focus:outline-none focus:border-amber-500 font-medium"></select>
               </div>
               <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">ชื่อลูกค้า / โน้ตกำกับ</label>
-                <input type="text" id="entry-customer-input" placeholder="เช่น นายเอก, ลูกค้าหน้าร้าน" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                <label class="block text-xs sm:text-sm font-semibold text-slate-300 mb-1.5">ชื่อลูกค้า / โน้ตกำกับ</label>
+                <input type="text" id="entry-customer-input" placeholder="เช่น นายเอก, ลูกค้าหน้าร้าน" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm sm:text-base text-white focus:outline-none focus:border-amber-500">
               </div>
             </div>
 
-            <!-- Terminal Textarea -->
+            <!-- Terminal Textarea Display -->
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1 flex items-center justify-between">
-                <span>ช่องกรอกข้อมูลตัวเลข</span>
-                <span class="text-[11px] text-slate-500 font-mono">1 บรรทัด = 1 คำสั่งแทง</span>
-              </label>
-              <textarea id="entry-raw-text" rows="8" placeholder="ตัวอย่างรูปแบบที่รองรับ:&#10;123 = 100x50 (3บน 100, โต๊ด 50)&#10;89 = 200x200 (2บน 200, 2ล่าง 200)&#10;78 = 100 (2บน 100)&#10;456 6กลับ = 50&#10;7 19ประตู = 50x50&#10;วิ่งบน 9 = 500&#10;วิ่งล่าง 4 = 300" class="w-full font-mono text-sm bg-slate-900 border border-slate-800 rounded-lg p-3 text-amber-300 focus:outline-none focus:border-amber-500 leading-relaxed"></textarea>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-xs sm:text-sm font-semibold text-slate-300">หน้าจอรายการตัวเลข</label>
+                <span class="text-xs text-amber-400">1 บรรทัด = 1 รายการแทง</span>
+              </div>
+              <textarea id="entry-raw-text" rows="6" placeholder="กดแป้นตัวเลขด้านล่าง หรือพิมพ์คำสั่ง&#10;เช่น: 123 = 100x50&#10;89 = 200x200" class="w-full font-mono text-base sm:text-lg bg-slate-900 border border-slate-800 rounded-xl p-3.5 text-amber-300 focus:outline-none focus:border-amber-500 leading-relaxed"></textarea>
             </div>
 
-            <!-- Actions -->
-            <div class="flex items-center justify-between pt-2">
-              <div class="text-xs text-slate-400 flex items-center gap-2">
-                <span>หักคอมมิชชันสายส่ง:</span>
-                <span id="entry-comm-display" class="font-bold text-amber-400 font-mono">15%</span>
+            <!-- Quick Action Touch Bar (Tablet Optimized Numpad) -->
+            <div class="p-3 bg-slate-900/90 rounded-xl border border-slate-800 space-y-2.5">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">แป้นพิมพ์สูตรและตัวเลขสัมผัส (Touch Numpad)</div>
+              
+              <!-- Shortcut Formula Buttons -->
+              <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <button type="button" onclick="insertTerminalText(' 19ประตู = ')" class="py-2.5 px-2 bg-slate-800 hover:bg-slate-700 active:bg-amber-500 active:text-slate-950 text-slate-200 font-bold rounded-lg text-xs sm:text-sm transition">19 ประตู</button>
+                <button type="button" onclick="insertTerminalText(' 6กลับ = ')" class="py-2.5 px-2 bg-slate-800 hover:bg-slate-700 active:bg-amber-500 active:text-slate-950 text-slate-200 font-bold rounded-lg text-xs sm:text-sm transition">6 กลับ</button>
+                <button type="button" onclick="insertTerminalText(' 2กลับ = ')" class="py-2.5 px-2 bg-slate-800 hover:bg-slate-700 active:bg-amber-500 active:text-slate-950 text-slate-200 font-bold rounded-lg text-xs sm:text-sm transition">2 กลับ</button>
+                <button type="button" onclick="insertTerminalText('3หน้า ')" class="py-2.5 px-2 bg-slate-800 hover:bg-slate-700 active:bg-amber-500 active:text-slate-950 text-blue-400 font-bold rounded-lg text-xs sm:text-sm transition">3 ตัวหน้า</button>
+                <button type="button" onclick="insertTerminalText('3ล่าง ')" class="py-2.5 px-2 bg-slate-800 hover:bg-slate-700 active:bg-amber-500 active:text-slate-950 text-indigo-400 font-bold rounded-lg text-xs sm:text-sm transition">3 ตัวล่าง</button>
+                <button type="button" onclick="insertTerminalText('วิ่งบน ')" class="py-2.5 px-2 bg-slate-800 hover:bg-slate-700 active:bg-amber-500 active:text-slate-950 text-emerald-400 font-bold rounded-lg text-xs sm:text-sm transition">วิ่งบน</button>
               </div>
-              <div class="flex items-center gap-3">
-                <button onclick="clearEntryTerminal()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium rounded-lg transition">ล้างหน้าจอ</button>
-                <button onclick="parseAndPreviewTicket()" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-lg flex items-center gap-2 transition">
-                  <i data-lucide="check" class="w-4 h-4"></i> ประมวลผล & บันทึกโพย
+
+              <!-- Main Touch Numpad Grid -->
+              <div class="grid grid-cols-4 gap-2">
+                <button type="button" onclick="insertTerminalText('7')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">7</button>
+                <button type="button" onclick="insertTerminalText('8')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">8</button>
+                <button type="button" onclick="insertTerminalText('9')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">9</button>
+                <button type="button" onclick="insertTerminalText(' = ')" class="py-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold text-lg rounded-xl">=</button>
+
+                <button type="button" onclick="insertTerminalText('4')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">4</button>
+                <button type="button" onclick="insertTerminalText('5')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">5</button>
+                <button type="button" onclick="insertTerminalText('6')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">6</button>
+                <button type="button" onclick="insertTerminalText('x')" class="py-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold text-lg rounded-xl font-mono">x</button>
+
+                <button type="button" onclick="insertTerminalText('1')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">1</button>
+                <button type="button" onclick="insertTerminalText('2')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">2</button>
+                <button type="button" onclick="insertTerminalText('3')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">3</button>
+                <button type="button" onclick="insertTerminalText('วิ่งล่าง ')" class="py-3 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs sm:text-sm rounded-xl">วิ่งล่าง</button>
+
+                <button type="button" onclick="insertTerminalText('0')" class="py-3 bg-slate-800/80 hover:bg-slate-700 text-white font-mono font-bold text-xl rounded-xl">0</button>
+                <button type="button" onclick="backspaceTerminalText()" class="py-3 bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 font-bold text-sm rounded-xl flex items-center justify-center gap-1">
+                  <i data-lucide="delete" class="w-5 h-5"></i> ลบ
+                </button>
+                <button type="button" onclick="insertTerminalText('\n')" class="col-span-2 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold text-base rounded-xl flex items-center justify-center gap-1.5">
+                  <i data-lucide="corner-down-left" class="w-5 h-5"></i> บรรทัดใหม่ (Enter)
+                </button>
+              </div>
+            </div>
+
+            <!-- Examples & Syntax Guide Box Below -->
+            <div class="p-3.5 bg-slate-900/60 rounded-xl border border-slate-800/80 text-xs sm:text-sm text-slate-300 space-y-1.5">
+              <div class="font-bold text-amber-400 flex items-center gap-1.5">
+                <i data-lucide="book-open" class="w-4 h-4"></i> รูปแบบคำสั่งที่ระบบรองรับ (ตัวอย่าง):
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 font-mono text-slate-300">
+                <div>• <span class="text-white font-bold">123 = 100x50</span> <span class="text-slate-400">(3ตรง 100, โต๊ด 50)</span></div>
+                <div>• <span class="text-white font-bold">89 = 200x200</span> <span class="text-slate-400">(2บน 200, 2ล่าง 200)</span></div>
+                <div>• <span class="text-white font-bold">7 19ประตู = 50x50</span> <span class="text-slate-400">(19 ประตู บน-ล่าง)</span></div>
+                <div>• <span class="text-white font-bold">456 6กลับ = 50</span> <span class="text-slate-400">(3ตรง สลับ 6 ตัว)</span></div>
+                <div>• <span class="text-white font-bold">3หน้า 285 = 100</span> <span class="text-slate-400">(3 ตัวหน้าตรง 100)</span></div>
+                <div>• <span class="text-white font-bold">วิ่งบน 9 = 500</span> <span class="text-slate-400">(เลขวิ่งบน 500)</span></div>
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-2 gap-3 border-t border-slate-800">
+              <div class="text-sm text-slate-300 flex items-center gap-2">
+                <span>หักคอมมิชชันสายส่ง:</span>
+                <span id="entry-comm-display" class="font-bold text-amber-400 font-mono text-base">15%</span>
+              </div>
+              <div class="flex items-center gap-3 w-full sm:w-auto">
+                <button type="button" onclick="clearEntryTerminal()" class="flex-1 sm:flex-none px-4 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 text-sm font-semibold rounded-xl transition">ล้างหน้าจอ</button>
+                <button type="button" onclick="parseAndPreviewTicket()" class="flex-1 sm:flex-none px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-base rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-amber-500/20">
+                  <i data-lucide="check" class="w-5 h-5"></i> ประมวลผล & บันทึกโพย
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Right: Real-time Ticket Parsing Preview -->
-          <div class="p-6 bg-slate-950 border border-slate-800 rounded-xl flex flex-col justify-between">
+          <!-- Right: Summary & Print Slip (5 Cols) -->
+          <div class="lg:col-span-5 p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col justify-between">
             <div>
-              <h4 class="font-bold text-white text-sm border-b border-slate-800 pb-3 flex items-center justify-between">
-                <span>สรุปโพยล่าสุด</span>
-                <span id="preview-ticket-id" class="text-xs font-mono text-slate-500">TKT-READY</span>
-              </h4>
-              <div id="preview-lines-container" class="mt-4 space-y-2 max-h-72 overflow-y-auto pr-1 text-xs">
-                <p class="text-slate-500 text-center py-10">ยังไม่มีรายการโพยที่เพิ่งบันทึก</p>
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3.5">
+                <h4 class="font-bold text-white text-base">สรุปโพยล่าสุด (ภาษาไทย)</h4>
+                <div class="flex items-center gap-2">
+                  <span id="preview-ticket-id" class="text-xs sm:text-sm font-mono text-slate-400 font-bold">TKT-READY</span>
+                  <button id="preview-print-btn" disabled onclick="printCurrentActiveTicket()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs sm:text-sm flex items-center gap-1.5 transition disabled:opacity-30 disabled:cursor-not-allowed">
+                    <i data-lucide="printer" class="w-4 h-4"></i> สั่งพิมพ์สลิป
+                  </button>
+                </div>
+              </div>
+
+              <!-- Ticket Line Items in Thai -->
+              <div id="preview-lines-container" class="mt-4 space-y-2 max-h-80 overflow-y-auto pr-1 text-sm">
+                <p class="text-slate-500 text-center py-12 text-sm sm:text-base">ยังไม่มีรายการโพยที่เพิ่งบันทึก</p>
               </div>
             </div>
-            <div class="border-t border-slate-800 pt-4 mt-4 space-y-2 text-xs">
-              <div class="flex justify-between text-slate-400">
-                <span>ยอดรวมแทง:</span>
-                <span id="preview-gross" class="font-mono text-white font-bold">฿0</span>
+
+            <!-- Financial Summary Box in Thai -->
+            <div class="border-t border-slate-800 pt-4 mt-4 space-y-2.5 text-sm sm:text-base">
+              <div class="flex justify-between text-slate-300">
+                <span>ยอดแทงรวม:</span>
+                <span id="preview-gross" class="font-mono text-white font-bold text-lg">฿0</span>
               </div>
-              <div class="flex justify-between text-slate-400">
-                <span>หักส่วนลดตัวแทน:</span>
-                <span id="preview-discount" class="font-mono text-amber-400">฿0</span>
+              <div class="flex justify-between text-slate-300">
+                <span>หักส่วนลดคอมมิชชันตัวแทน:</span>
+                <span id="preview-discount" class="font-mono text-amber-400 font-bold text-base">฿0</span>
               </div>
-              <div class="flex justify-between text-sm font-bold text-white border-t border-slate-800 pt-2">
+              <div class="flex justify-between text-base sm:text-lg font-bold text-white border-t border-slate-800 pt-2.5">
                 <span>ยอดสุทธิที่เรียกเก็บ:</span>
-                <span id="preview-net" class="font-mono text-emerald-400">฿0</span>
+                <span id="preview-net" class="font-mono text-emerald-400 text-xl font-bold">฿0</span>
               </div>
             </div>
           </div>
+
         </div>
       </section>
 
       <!-- ================= 3. TAB: RISK MANAGEMENT ================= -->
       <section id="tab-risk" class="hidden space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-slate-950 border border-slate-800 rounded-xl">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-slate-950 border border-slate-800 rounded-2xl">
           <div>
-            <h3 class="font-bold text-white text-base">ระบบบริหารความเสี่ยง (Real-time Exposure Matrix)</h3>
-            <p class="text-xs text-slate-400 mt-0.5">ติดตามภาระจ่ายเงินรางวัลสูงสุดรายตัวเลขแบบเรียลไทม์ และส่งต่อยอดแทงส่วนเกิน (Hedge)</p>
+            <h3 class="font-bold text-white text-lg">ระบบบริหารความเสี่ยง (Real-time Exposure Matrix)</h3>
+            <p class="text-sm text-slate-400 mt-0.5">ติดตามภาระจ่ายเงินรางวัลสูงสุดรายตัวเลขแบบเรียลไทม์ และส่งต่อยอดแทงส่วนเกิน (Hedge)</p>
           </div>
-          <div class="flex items-center gap-3">
-            <button onclick="autoHedgeAllOverLimit()" class="px-4 py-2 bg-rose-600/20 border border-rose-500/50 hover:bg-rose-600/30 text-rose-300 font-semibold text-xs rounded-lg flex items-center gap-1.5 transition">
-              <i data-lucide="zap" class="w-4 h-4"></i> ตัดส่งต่ออัตโนมัติทุกเลขที่ชนเพดาน (Auto-Hedge)
-            </button>
-          </div>
+          <button onclick="autoHedgeAllOverLimit()" class="px-5 py-2.5 bg-rose-600/20 border border-rose-500/50 hover:bg-rose-600/30 text-rose-300 font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition">
+            <i data-lucide="zap" class="w-4 h-4"></i> ตัดส่งต่ออัตโนมัติทุกเลขที่ชนเพดาน (Auto-Hedge)
+          </button>
         </div>
 
-        <!-- Risk Matrix Table -->
-        <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-          <div class="flex items-center justify-between mb-4">
+        <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
             <div class="flex items-center gap-2">
-              <span class="text-xs text-slate-400">กรองประเภท:</span>
-              <select id="risk-filter-type" onchange="renderRiskMatrix()" class="bg-slate-900 border border-slate-800 rounded px-2.5 py-1 text-xs text-slate-200">
-                <option value="ALL">ทั้งหมด (All Types)</option>
+              <span class="text-sm text-slate-300 font-medium">กรองประเภท:</span>
+              <select id="risk-filter-type" onchange="renderRiskMatrix()" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-sm text-slate-200">
+                <option value="ALL">ทั้งหมด (ทุกประเภทรางวัล)</option>
                 <option value="3TOP">3 ตัวบน</option>
                 <option value="3TOD">3 ตัวโต๊ด</option>
+                <option value="3FRONT">3 ตัวหน้า</option>
+                <option value="3BOT">3 ตัวล่าง</option>
                 <option value="2TOP">2 ตัวบน</option>
                 <option value="2BOT">2 ตัวล่าง</option>
               </select>
             </div>
-            <div class="text-xs text-slate-400 font-mono">
-              เพดานความเสี่ยง: 3ตัวบน=฿250,000 | 2ตัว=฿100,000
+            <div id="risk-caps-summary-text" class="text-xs sm:text-sm text-slate-400 font-mono">
+              เพดาน: 3บน=฿250k | 2ตัว=฿100k
             </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+          <div class="overflow-x-auto -mx-5 sm:mx-0">
+            <table class="w-full text-left text-sm min-w-[750px]">
               <thead class="text-slate-400 bg-slate-900 border-b border-slate-800">
                 <tr>
-                  <th class="p-3">ประเภท</th>
-                  <th class="p-3">ตัวเลข</th>
-                  <th class="p-3 text-right">ยอดรับแทงรวม</th>
-                  <th class="p-3 text-right">ยอดส่งออก (Hedge)</th>
-                  <th class="p-3 text-right">ยอดถือสู้สุทธิ</th>
-                  <th class="p-3 text-right">จ่ายบาทละ</th>
-                  <th class="p-3 text-right">ภาระจ่ายหากออกรางวัล (Max Exposure)</th>
-                  <th class="p-3 text-center">สถานะความเสี่ยง</th>
-                  <th class="p-3 text-center">การจัดการ</th>
+                  <th class="p-3.5">ประเภทรางวัล</th>
+                  <th class="p-3.5">ตัวเลข</th>
+                  <th class="p-3.5 text-right">ยอดรับแทงรวม</th>
+                  <th class="p-3.5 text-right">ยอดส่งออก (Hedge)</th>
+                  <th class="p-3.5 text-right">ยอดถือสู้สุทธิ</th>
+                  <th class="p-3.5 text-right">จ่ายบาทละ</th>
+                  <th class="p-3.5 text-right">ภาระจ่ายหากออกรางวัล</th>
+                  <th class="p-3.5 text-center">สถานะ</th>
+                  <th class="p-3.5 text-center">การจัดการ</th>
                 </tr>
               </thead>
-              <tbody id="risk-matrix-table-body" class="divide-y divide-slate-800">
-                <!-- Dynamically populated -->
-              </tbody>
+              <tbody id="risk-matrix-table-body" class="divide-y divide-slate-800"></tbody>
             </table>
           </div>
         </div>
@@ -330,334 +418,495 @@
       <!-- ================= 4. TAB: CAPPED NUMBERS ================= -->
       <section id="tab-capped" class="hidden space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Left: Add Capped Number Form -->
-          <div class="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-4">
-            <h3 class="font-bold text-white text-sm border-b border-slate-800 pb-3 flex items-center gap-2">
-              <i data-lucide="shield-ban" class="w-4 h-4 text-amber-500"></i> กำหนดเลขอั้น / เงื่อนไขพิเศษรายงวด
+          <div class="p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4">
+            <h3 class="font-bold text-white text-base border-b border-slate-800 pb-3 flex items-center gap-2">
+              <i data-lucide="shield-ban" class="w-5 h-5 text-amber-500"></i> กำหนดเลขอั้น / เรตพิเศษ
             </h3>
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">ตัวเลข</label>
-              <input type="text" id="capped-number-input" placeholder="เช่น 28, 905, 59" class="w-full font-mono bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+              <label class="block text-sm font-medium text-slate-300 mb-1.5">ตัวเลข</label>
+              <input type="text" id="capped-number-input" placeholder="เช่น 28, 905, 59" class="w-full font-mono bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base text-white focus:outline-none focus:border-amber-500">
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">ประเภทรางวัล</label>
-              <select id="capped-type-select" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+              <label class="block text-sm font-medium text-slate-300 mb-1.5">ประเภทรางวัล</label>
+              <select id="capped-type-select" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm sm:text-base text-white focus:outline-none focus:border-amber-500">
                 <option value="2BOT">2 ตัวล่าง</option>
                 <option value="2TOP">2 ตัวบน</option>
                 <option value="3TOP">3 ตัวบน</option>
                 <option value="3TOD">3 ตัวโต๊ด</option>
+                <option value="3FRONT">3 ตัวหน้า</option>
+                <option value="3BOT">3 ตัวล่าง</option>
                 <option value="ALL2">ทั้ง 2 ตัวบนและล่าง</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">นโยบายการจ่าย / รับแทง</label>
-              <select id="capped-policy-select" onchange="toggleCappedCustomRateInput()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
-                <option value="HALF">จ่ายครึ่งราคา (50% Payout Rate)</option>
-                <option value="CLOSED">งดรับแทงเด็ดขาด (Closed / ไม่รับ)</option>
-                <option value="CUSTOM">กำหนดอัตราจ่ายเฉพาะตัวเลข (Custom Rate)</option>
+              <label class="block text-sm font-medium text-slate-300 mb-1.5">นโยบายการรับแทง</label>
+              <select id="capped-policy-select" onchange="toggleCappedCustomRateInput()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm sm:text-base text-white focus:outline-none focus:border-amber-500">
+                <option value="HALF">จ่ายครึ่งราคา (50% Rate)</option>
+                <option value="CLOSED">งดรับแทงเด็ดขาด (Closed)</option>
+                <option value="CUSTOM">กำหนดเรตจ่ายเฉพาะ (Custom)</option>
               </select>
             </div>
             <div id="capped-custom-rate-box" class="hidden">
-              <label class="block text-xs font-medium text-slate-400 mb-1">กำหนดจ่ายบาทละ</label>
-              <input type="number" id="capped-custom-rate-input" placeholder="เช่น 50 หรือ 450" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+              <label class="block text-sm font-medium text-slate-300 mb-1.5">กำหนดจ่ายบาทละ</label>
+              <input type="number" id="capped-custom-rate-input" placeholder="เช่น 50 หรือ 450" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base text-white focus:outline-none focus:border-amber-500 font-mono">
             </div>
-            <button onclick="addCappedNumber()" class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-lg flex items-center justify-center gap-1.5 transition">
-              <i data-lucide="plus" class="w-4 h-4"></i> เพิ่มเข้าบัญชีเลขอั้นงวดนี้
+            <button onclick="addCappedNumber()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-base rounded-xl flex items-center justify-center gap-2 transition shadow-md shadow-amber-500/20">
+              <i data-lucide="plus" class="w-5 h-5"></i> เพิ่มเข้าบัญชีเลขอั้นงวดนี้
             </button>
           </div>
 
-          <!-- Right: Capped Numbers List -->
-          <div class="lg:col-span-2 p-6 bg-slate-950 border border-slate-800 rounded-xl">
+          <div class="lg:col-span-2 p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-              <h3 class="font-bold text-white text-sm">รายการเลขอั้นประจำงวดปัจจุบัน</h3>
+              <h3 class="font-bold text-white text-base">รายการเลขอั้นประจำงวดปัจจุบัน</h3>
               <span id="capped-count-badge" class="badge bg-amber-500/10 text-amber-400 border border-amber-500/30">0 รายการ</span>
             </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+            <div class="overflow-x-auto -mx-5 sm:mx-0">
+              <table class="w-full text-left text-sm min-w-[500px]">
                 <thead class="text-slate-400 bg-slate-900 border-b border-slate-800">
                   <tr>
-                    <th class="p-3">ประเภท</th>
-                    <th class="p-3">ตัวเลข</th>
-                    <th class="p-3">เงื่อนไขการรับแทง</th>
-                    <th class="p-3 text-right">เรตจ่ายจริง (บาทละ)</th>
-                    <th class="p-3 text-center">จัดการ</th>
+                    <th class="p-3.5">ประเภทรางวัล</th>
+                    <th class="p-3.5">ตัวเลข</th>
+                    <th class="p-3.5">เงื่อนไขการรับแทง</th>
+                    <th class="p-3.5 text-right">เรตจ่ายจริง (บาทละ)</th>
+                    <th class="p-3.5 text-center">จัดการ</th>
                   </tr>
                 </thead>
-                <tbody id="capped-table-body" class="divide-y divide-slate-800">
-                  <!-- Dynamically populated -->
-                </tbody>
+                <tbody id="capped-table-body" class="divide-y divide-slate-800"></tbody>
               </table>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ================= 5. TAB: AGENTS MANAGEMENT ================= -->
-      <section id="tab-agents" class="hidden space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-slate-950 border border-slate-800 rounded-xl">
+      <!-- ================= 5. TAB: SETTINGS & RISK LIMITS ================= -->
+      <section id="tab-settings" class="hidden space-y-6">
+        <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 class="font-bold text-white text-base">ทะเบียนและบัญชีตัวแทนจำหน่าย (Agents Ledger)</h3>
-            <p class="text-xs text-slate-400 mt-0.5">กำหนดส่วนลดคอมมิชชัน วงเงินเครดิต และดูยอดค้างชำระของตัวแทนแต่ละสาย</p>
+            <h3 class="font-bold text-white text-lg">กำหนดอัตราจ่ายมาตรฐานและเพดานความเสี่ยง</h3>
+            <p class="text-sm text-slate-400 mt-0.5">การปรับเปลี่ยนค่าในหน้านี้จะมีผลต่อการคำนวณใน Terminal, เมทริกซ์ความเสี่ยง และผลรางวัลทันที</p>
           </div>
-          <button onclick="openAddAgentModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 transition">
+          <button onclick="saveSettingsConfiguration()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition shadow-md shadow-amber-500/20">
+            <i data-lucide="save" class="w-4 h-4"></i> บันทึกการตั้งค่า
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4">
+            <h4 class="font-bold text-white text-base border-b border-slate-800 pb-3 flex items-center gap-2">
+              <i data-lucide="coins" class="w-5 h-5 text-amber-500"></i> อัตราจ่ายเงินรางวัลมาตรฐาน (บาทละ)
+            </h4>
+            <div class="space-y-3.5 text-sm sm:text-base">
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">3 ตัวบนตรง</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">บาทละ</span>
+                  <input type="number" id="cfg-rate-3top" class="w-28 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-amber-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">3 ตัวโต๊ด</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">บาทละ</span>
+                  <input type="number" id="cfg-rate-3tod" class="w-28 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-amber-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">3 ตัวหน้า</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">บาทละ</span>
+                  <input type="number" id="cfg-rate-3front" class="w-28 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-amber-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">3 ตัวล่าง</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">บาทละ</span>
+                  <input type="number" id="cfg-rate-3bot" class="w-28 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-amber-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">2 ตัวบน</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">บาทละ</span>
+                  <input type="number" id="cfg-rate-2top" class="w-28 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-amber-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">2 ตัวล่าง</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">บาทละ</span>
+                  <input type="number" id="cfg-rate-2bot" class="w-28 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-amber-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">เลขวิ่งบน</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">บาทละ</span>
+                  <input type="number" step="0.1" id="cfg-rate-runtop" class="w-28 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-amber-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">เลขวิ่งล่าง</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">บาทละ</span>
+                  <input type="number" step="0.1" id="cfg-rate-runbot" class="w-28 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-amber-400 font-mono font-bold text-base">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4">
+            <h4 class="font-bold text-white text-base border-b border-slate-800 pb-3 flex items-center gap-2">
+              <i data-lucide="shield" class="w-5 h-5 text-rose-500"></i> เพดานความเสี่ยงสูงสุดต่อตัวเลข (Risk Caps)
+            </h4>
+            <div class="space-y-3.5 text-sm sm:text-base">
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">เพดานจ่าย 3 ตัวบน</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">฿</span>
+                  <input type="number" id="cfg-cap-3top" class="w-36 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-rose-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">เพดานจ่าย 3 ตัวโต๊ด</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">฿</span>
+                  <input type="number" id="cfg-cap-3tod" class="w-36 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-rose-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">เพดานจ่าย 3 ตัวหน้า</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">฿</span>
+                  <input type="number" id="cfg-cap-3front" class="w-36 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-rose-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">เพดานจ่าย 3 ตัวล่าง</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">฿</span>
+                  <input type="number" id="cfg-cap-3bot" class="w-36 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-rose-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">เพดานจ่าย 2 ตัวบน / ล่าง</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">฿</span>
+                  <input type="number" id="cfg-cap-2all" class="w-36 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-rose-400 font-mono font-bold text-base">
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <label class="text-slate-300 font-medium">เพดานจ่าย เลขวิ่ง</label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-500 text-xs">฿</span>
+                  <input type="number" id="cfg-cap-runall" class="w-36 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-right text-rose-400 font-mono font-bold text-base">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 6. TAB: AGENTS MANAGEMENT ================= -->
+      <section id="tab-agents" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+          <div>
+            <h3 class="font-bold text-white text-lg">ทะเบียนและบัญชีตัวแทนจำหน่าย (Agents Ledger)</h3>
+            <p class="text-sm text-slate-400 mt-0.5">กำหนดส่วนลดคอมมิชชัน วงเงินเครดิต และดูยอดค้างชำระของตัวแทนแต่ละสาย</p>
+          </div>
+          <button onclick="openAddAgentModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition shadow-md shadow-amber-500/20">
             <i data-lucide="user-plus" class="w-4 h-4"></i> เพิ่มตัวแทนจำหน่ายใหม่
           </button>
         </div>
 
-        <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+        <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+          <div class="overflow-x-auto -mx-5 sm:mx-0">
+            <table class="w-full text-left text-sm min-w-[700px]">
               <thead class="text-slate-400 bg-slate-900 border-b border-slate-800">
                 <tr>
-                  <th class="p-3">รหัส</th>
-                  <th class="p-3">ชื่อตัวแทน / สายงาน</th>
-                  <th class="p-3">เบอร์โทรศัพท์</th>
-                  <th class="p-3 text-right">อัตราคอมมิชชัน</th>
-                  <th class="p-3 text-right">วงเงินเครดิต</th>
-                  <th class="p-3 text-right">ยอดแทงงวดนี้</th>
-                  <th class="p-3 text-right">ยอดสุทธิเรียกเก็บ</th>
-                  <th class="p-3 text-center">สถานะ</th>
+                  <th class="p-3.5">รหัส</th>
+                  <th class="p-3.5">ชื่อตัวแทน / สายงาน</th>
+                  <th class="p-3.5">เบอร์โทรศัพท์</th>
+                  <th class="p-3.5 text-right">คอมมิชชัน</th>
+                  <th class="p-3.5 text-right">วงเงินเครดิต</th>
+                  <th class="p-3.5 text-right">ยอดแทงงวดนี้</th>
+                  <th class="p-3.5 text-right">ยอดสุทธิเรียกเก็บ</th>
+                  <th class="p-3.5 text-center">สถานะ</th>
                 </tr>
               </thead>
-              <tbody id="agents-full-table-body" class="divide-y divide-slate-800">
-                <!-- Dynamically populated -->
-              </tbody>
+              <tbody id="agents-full-table-body" class="divide-y divide-slate-800"></tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ================= 6. TAB: PERIOD MANAGEMENT ================= -->
+      <!-- ================= 7. TAB: PERIOD MANAGEMENT ================= -->
       <section id="tab-period" class="hidden space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Left: Current Period Status & Actions -->
-          <div class="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-5">
+          <div class="p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-5">
             <h3 class="font-bold text-white text-base border-b border-slate-800 pb-3 flex items-center gap-2">
               <i data-lucide="sliders" class="w-5 h-5 text-amber-500"></i> จัดการงวดปัจจุบัน
             </h3>
-            <div class="space-y-3">
+            <div class="space-y-3.5">
               <div>
-                <span class="text-xs text-slate-400">งวดที่กำลังดำเนินการ:</span>
+                <span class="text-xs sm:text-sm text-slate-400">งวดที่กำลังดำเนินการ:</span>
                 <div id="period-manage-name" class="font-bold text-lg text-white">ไม่มีงวดที่เปิดรับ</div>
               </div>
               <div>
-                <span class="text-xs text-slate-400">สถานะระบบ:</span>
+                <span class="text-xs sm:text-sm text-slate-400">สถานะระบบ:</span>
                 <div id="period-manage-status" class="mt-1">
                   <span class="badge bg-red-950 text-red-400 border border-red-800">CLOSED</span>
                 </div>
               </div>
               <div>
-                <span class="text-xs text-slate-400">กำหนดเวลาปิดรับแทง:</span>
-                <div id="period-manage-cutoff" class="text-sm font-mono text-slate-300">-</div>
+                <span class="text-xs sm:text-sm text-slate-400">กำหนดเวลาปิดรับแทง:</span>
+                <div id="period-manage-cutoff" class="text-base font-mono text-slate-200">-</div>
               </div>
             </div>
 
-            <div class="pt-4 border-t border-slate-800 space-y-2.5">
-              <button id="toggle-period-accept-btn" onclick="toggleAcceptingStatus()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition">
-                <i data-lucide="pause-circle" class="w-4 h-4"></i> พักการรับแทงชั่วคราว
+            <div class="pt-4 border-t border-slate-800 space-y-3">
+              <button id="toggle-period-accept-btn" onclick="toggleAcceptingStatus()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition">
+                <i data-lucide="pause-circle" class="w-5 h-5"></i> พักการรับแทงชั่วคราว
               </button>
-              <button onclick="switchTab('settlement')" class="w-full py-2.5 bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500/20 text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition">
-                <i data-lucide="check-check" class="w-4 h-4"></i> ไปที่หน้าออกรางวัล & สรุปยอด
+              <button onclick="switchTab('settlement')" class="w-full py-3 bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500/20 text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition">
+                <i data-lucide="check-check" class="w-5 h-5"></i> ไปที่หน้าออกรางวัล & สรุปยอด
               </button>
             </div>
           </div>
 
-          <!-- Right: Summary of current tickets in this period -->
-          <div class="lg:col-span-2 p-6 bg-slate-950 border border-slate-800 rounded-xl">
-            <h3 class="font-bold text-white text-sm border-b border-slate-800 pb-3 mb-4">รายการโพยในงวดปัจจุบัน</h3>
-            <div class="overflow-x-auto max-h-96 overflow-y-auto">
-              <table class="w-full text-left text-xs">
+          <div class="lg:col-span-2 p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl">
+            <h3 class="font-bold text-white text-base border-b border-slate-800 pb-3 mb-4">รายการโพยในงวดปัจจุบัน</h3>
+            <div class="overflow-x-auto -mx-5 sm:mx-0 max-h-96 overflow-y-auto">
+              <table class="w-full text-left text-sm min-w-[600px]">
                 <thead class="text-slate-400 bg-slate-900 border-b border-slate-800 sticky top-0">
                   <tr>
-                    <th class="p-3">เลขที่โพย</th>
-                    <th class="p-3">เวลาคีย์</th>
-                    <th class="p-3">ตัวแทน / สาย</th>
-                    <th class="p-3">ลูกค้า</th>
-                    <th class="p-3 text-right">ยอดรวม</th>
-                    <th class="p-3 text-right">ยอดสุทธิ</th>
-                    <th class="p-3 text-center">ดูข้อมูล</th>
+                    <th class="p-3.5">เลขที่โพย</th>
+                    <th class="p-3.5">เวลาคีย์</th>
+                    <th class="p-3.5">ตัวแทน / สาย</th>
+                    <th class="p-3.5">ลูกค้า</th>
+                    <th class="p-3.5 text-right">ยอดรวม</th>
+                    <th class="p-3.5 text-right">ยอดสุทธิ</th>
+                    <th class="p-3.5 text-center">ดูข้อมูล</th>
                   </tr>
                 </thead>
-                <tbody id="period-tickets-table-body" class="divide-y divide-slate-800">
-                  <!-- Dynamically populated -->
-                </tbody>
+                <tbody id="period-tickets-table-body" class="divide-y divide-slate-800"></tbody>
               </table>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ================= 7. TAB: DRAW SETTLEMENT ================= -->
+      <!-- ================= 8. TAB: DRAW SETTLEMENT ================= -->
       <section id="tab-settlement" class="hidden space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Left: Input Winning Numbers -->
-          <div class="p-6 bg-slate-950 border border-slate-800 rounded-xl space-y-4">
-            <h3 class="font-bold text-white text-base border-b border-slate-800 pb-3 flex items-center gap-2">
-              <i data-lucide="award" class="w-5 h-5 text-amber-500"></i> กรอกผลรางวัลสลากกินแบ่ง
-            </h3>
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">รางวัลที่ 1 (6 ตัวตรง)</label>
-              <input type="text" id="draw-prize1-input" maxlength="6" placeholder="เช่น 952894" class="w-full font-mono text-center tracking-widest text-lg font-bold bg-slate-900 border border-slate-800 rounded-lg py-2 text-amber-400 focus:outline-none focus:border-amber-500">
+          <div class="p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4">
+            <div class="border-b border-slate-800 pb-3">
+              <h3 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="award" class="w-5 h-5 text-amber-500"></i> กรอกผลรางวัลสลากกินแบ่งรัฐบาล
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-400 mt-1">กรอกผลรางวัลให้ครบทุกหมวดเพื่อตรวจรางวัลทุกประเภท</p>
             </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">รางวัลเลขท้าย 2 ตัวล่าง</label>
-              <input type="text" id="draw-prize2bot-input" maxlength="2" placeholder="เช่น 28" class="w-full font-mono text-center tracking-widest text-lg font-bold bg-slate-900 border border-slate-800 rounded-lg py-2 text-emerald-400 focus:outline-none focus:border-amber-500">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs sm:text-sm font-semibold text-slate-300 mb-1">รางวัลที่ 1 (6 ตัว)</label>
+                <input type="text" id="draw-prize1-input" maxlength="6" placeholder="เช่น 952894" class="w-full font-mono text-center tracking-widest text-xl font-bold bg-slate-900 border border-slate-800 rounded-xl py-2.5 text-amber-400 focus:outline-none focus:border-amber-500">
+              </div>
+              <div>
+                <label class="block text-xs sm:text-sm font-semibold text-slate-300 mb-1">เลขท้าย 2 ตัวล่าง</label>
+                <input type="text" id="draw-prize2bot-input" maxlength="2" placeholder="เช่น 28" class="w-full font-mono text-center tracking-widest text-xl font-bold bg-slate-900 border border-slate-800 rounded-xl py-2.5 text-emerald-400 focus:outline-none focus:border-amber-500">
+              </div>
             </div>
-            <div class="flex gap-2 pt-2">
-              <button onclick="randomizeDrawNumbers()" class="flex-1 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg transition flex items-center justify-center gap-1.5">
-                <i data-lucide="dices" class="w-3.5 h-3.5"></i> สุ่มตัวเลขจำลอง
+
+            <div>
+              <label class="block text-xs sm:text-sm font-semibold text-slate-300 mb-1">รางวัลเลขหน้า 3 ตัว (2 รางวัล)</label>
+              <div class="grid grid-cols-2 gap-3">
+                <input type="text" id="draw-front3-1-input" maxlength="3" placeholder="ตัวที่ 1" class="w-full font-mono text-center tracking-widest text-lg font-bold bg-slate-900 border border-slate-800 rounded-xl py-2 text-blue-400 focus:outline-none focus:border-blue-500">
+                <input type="text" id="draw-front3-2-input" maxlength="3" placeholder="ตัวที่ 2" class="w-full font-mono text-center tracking-widest text-lg font-bold bg-slate-900 border border-slate-800 rounded-xl py-2 text-blue-400 focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs sm:text-sm font-semibold text-slate-300 mb-1">รางวัลเลขท้าย 3 ตัว / 3 ตัวล่าง (2 รางวัล)</label>
+              <div class="grid grid-cols-2 gap-3">
+                <input type="text" id="draw-bot3-1-input" maxlength="3" placeholder="ตัวที่ 1" class="w-full font-mono text-center tracking-widest text-lg font-bold bg-slate-900 border border-slate-800 rounded-xl py-2 text-indigo-400 focus:outline-none focus:border-indigo-500">
+                <input type="text" id="draw-bot3-2-input" maxlength="3" placeholder="ตัวที่ 2" class="w-full font-mono text-center tracking-widest text-lg font-bold bg-slate-900 border border-slate-800 rounded-xl py-2 text-indigo-400 focus:outline-none focus:border-indigo-500">
+              </div>
+            </div>
+
+            <div class="flex gap-2.5 pt-2">
+              <button onclick="randomizeDrawNumbers()" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs sm:text-sm rounded-xl transition flex items-center justify-center gap-1.5 font-semibold">
+                <i data-lucide="dices" class="w-4 h-4"></i> สุ่มเลขจำลอง
               </button>
-              <button onclick="executeDrawSettlement()" class="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-lg transition flex items-center justify-center gap-1.5">
-                <i data-lucide="calculator" class="w-3.5 h-3.5"></i> คำนวณตรวจรางวัล
+              <button onclick="executeDrawSettlement()" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs sm:text-sm rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20">
+                <i data-lucide="calculator" class="w-4 h-4"></i> คำนวณตรวจรางวัล
               </button>
             </div>
           </div>
 
-          <!-- Right: Settlement Summary Card -->
-          <div class="lg:col-span-2 p-6 bg-slate-950 border border-slate-800 rounded-xl flex flex-col justify-between">
+          <div class="lg:col-span-2 p-5 sm:p-6 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col justify-between">
             <div>
-              <h3 class="font-bold text-white text-sm border-b border-slate-800 pb-3 flex items-center justify-between">
-                <span>สรุปผลการออกรางวัลและงบกำไร/ขาดทุน (P&L)</span>
-                <span id="settlement-status-badge" class="badge bg-slate-800 text-slate-400">รอคำนวณ</span>
-              </h3>
-
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
-                <div class="p-3 bg-slate-900 rounded-lg">
-                  <span class="text-[11px] text-slate-400">3 ตัวบน</span>
-                  <div id="res-3top" class="font-mono text-lg font-bold text-amber-400">-</div>
-                </div>
-                <div class="p-3 bg-slate-900 rounded-lg">
-                  <span class="text-[11px] text-slate-400">2 ตัวบน</span>
-                  <div id="res-2top" class="font-mono text-lg font-bold text-amber-400">-</div>
-                </div>
-                <div class="p-3 bg-slate-900 rounded-lg">
-                  <span class="text-[11px] text-slate-400">2 ตัวล่าง</span>
-                  <div id="res-2bot" class="font-mono text-lg font-bold text-emerald-400">-</div>
-                </div>
-                <div class="p-3 bg-slate-900 rounded-lg">
-                  <span class="text-[11px] text-slate-400">3 ตัวโต๊ด</span>
-                  <div id="res-3tod" class="font-mono text-xs font-semibold text-slate-300 truncate">-</div>
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-white text-base">สรุปผลการออกรางวัลและงบกำไร/ขาดทุนสุทธิ</h3>
+                <div class="flex items-center gap-2">
+                  <span id="settlement-status-badge" class="badge bg-slate-800 text-slate-400">รอคำนวณ</span>
+                  <button id="settle-print-btn" disabled onclick="printCurrentSettlementReport()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs sm:text-sm flex items-center gap-1.5 transition disabled:opacity-30 disabled:cursor-not-allowed">
+                    <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์สรุปงบ
+                  </button>
                 </div>
               </div>
 
-              <!-- Settlement Result Metrics -->
-              <div class="space-y-2 border-t border-slate-800 pt-3 text-xs">
-                <div class="flex justify-between text-slate-400">
+              <!-- Results Grid Display in Thai -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+                <div class="p-3 bg-slate-900 rounded-xl text-center">
+                  <span class="text-xs text-slate-400">3 ตัวบน</span>
+                  <div id="res-3top" class="font-mono text-xl font-bold text-amber-400">-</div>
+                </div>
+                <div class="p-3 bg-slate-900 rounded-xl text-center">
+                  <span class="text-xs text-slate-400">2 ตัวบน</span>
+                  <div id="res-2top" class="font-mono text-xl font-bold text-amber-400">-</div>
+                </div>
+                <div class="p-3 bg-slate-900 rounded-xl text-center">
+                  <span class="text-xs text-slate-400">2 ตัวล่าง</span>
+                  <div id="res-2bot" class="font-mono text-xl font-bold text-emerald-400">-</div>
+                </div>
+                <div class="p-3 bg-slate-900 rounded-xl text-center">
+                  <span class="text-xs text-slate-400">3 ตัวโต๊ด</span>
+                  <div id="res-3tod" class="font-mono text-sm font-semibold text-slate-300 truncate">-</div>
+                </div>
+                <div class="p-3 bg-slate-900 rounded-xl text-center col-span-2">
+                  <span class="text-xs text-slate-400">เลขหน้า 3 ตัว (2 รางวัล)</span>
+                  <div id="res-3front" class="font-mono text-base font-bold text-blue-400">-</div>
+                </div>
+                <div class="p-3 bg-slate-900 rounded-xl text-center col-span-2">
+                  <span class="text-xs text-slate-400">เลขท้าย 3 ตัว (2 รางวัล)</span>
+                  <div id="res-3bot" class="font-mono text-base font-bold text-indigo-400">-</div>
+                </div>
+              </div>
+
+              <div class="space-y-2 border-t border-slate-800 pt-3 text-sm">
+                <div class="flex justify-between text-slate-300">
                   <span>ยอดรับแทงรวมทั้งหมด:</span>
-                  <span id="settle-turnover" class="font-mono text-white font-semibold">฿0</span>
+                  <span id="settle-turnover" class="font-mono text-white font-bold text-base">฿0</span>
                 </div>
-                <div class="flex justify-between text-slate-400">
+                <div class="flex justify-between text-slate-300">
                   <span>หักคอมมิชชันตัวแทนจ่ายออก:</span>
-                  <span id="settle-comm" class="font-mono text-amber-400">฿0</span>
+                  <span id="settle-comm" class="font-mono text-amber-400 font-bold text-base">฿0</span>
                 </div>
-                <div class="flex justify-between text-slate-400">
-                  <span>ยอดเงินรางวัลที่ต้องจ่ายให้ลูกค้า:</span>
-                  <span id="settle-payout" class="font-mono text-rose-400 font-semibold">฿0</span>
+                <div class="flex justify-between text-slate-300">
+                  <span>ยอดเงินรางวัลที่ต้องจ่าย:</span>
+                  <span id="settle-payout" class="font-mono text-rose-400 font-bold text-base">฿0</span>
                 </div>
-                <div class="flex justify-between text-sm font-bold pt-2 border-t border-slate-800">
-                  <span>กำไร/ขาดทุนสุทธิของเจ้ามือ (Net P&L):</span>
-                  <span id="settle-net-pnl" class="font-mono text-emerald-400">฿0</span>
+                <div class="flex justify-between text-base sm:text-lg font-bold pt-2.5 border-t border-slate-800">
+                  <span>กำไร/ขาดทุนสุทธิ (Net P&L):</span>
+                  <span id="settle-net-pnl" class="font-mono text-emerald-400 text-xl font-bold">฿0</span>
                 </div>
               </div>
             </div>
 
-            <!-- Action Button to Archive Period -->
             <div class="pt-4 mt-4 border-t border-slate-800 flex justify-end">
-              <button id="archive-period-btn" disabled onclick="archiveCurrentPeriod()" class="px-5 py-2.5 bg-slate-800 text-slate-500 font-bold text-xs rounded-lg flex items-center gap-2 transition cursor-not-allowed">
-                <i data-lucide="archive" class="w-4 h-4"></i> บันทึกปิดงวดและจัดเก็บลงคลังประวัติ
+              <button id="archive-period-btn" disabled onclick="archiveCurrentPeriod()" class="w-full sm:w-auto px-6 py-3 bg-slate-800 text-slate-500 font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition cursor-not-allowed">
+                <i data-lucide="archive" class="w-5 h-5"></i> บันทึกปิดงวดและจัดเก็บลงคลังประวัติ
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ================= 8. TAB: HISTORICAL ARCHIVES ================= -->
+      <!-- ================= 9. TAB: HISTORICAL ARCHIVES ================= -->
       <section id="tab-history" class="hidden space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-slate-950 border border-slate-800 rounded-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-950 border border-slate-800 rounded-2xl">
           <div>
-            <h3 class="font-bold text-white text-base">คลังข้อมูลและสถิติงวดย้อนหลัง (Historical Archives)</h3>
-            <p class="text-xs text-slate-400 mt-0.5">ตรวจสอบบัญชีย้อนหลัง ประวัติการออกรางวัล ยอดเงินรางวัล และกำไรขาดทุนสะสม</p>
+            <h3 class="font-bold text-white text-lg">คลังข้อมูลและสถิติงวดย้อนหลัง (Archives)</h3>
+            <p class="text-sm text-slate-400 mt-0.5">ตรวจสอบบัญชีย้อนหลัง ผลรางวัล และคลิกดูรายละเอียดรายการแทงในแต่ละโพย</p>
           </div>
-          <!-- Period Selector Dropdown -->
-          <div class="flex items-center gap-3">
-            <span class="text-xs text-slate-400">เลือกดูงวด:</span>
-            <select id="history-period-select" onchange="renderSelectedHistoryPeriod()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-amber-400 font-semibold focus:outline-none focus:border-amber-500">
-              <!-- Dynamically populated -->
-            </select>
-          </div>
-        </div>
-
-        <!-- History KPI Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl">
-            <span class="text-xs text-slate-400">ยอดขายรวมงวดนี้</span>
-            <div id="hist-turnover" class="text-xl font-bold text-white mt-1">฿0</div>
-            <div id="hist-tickets-count" class="text-[11px] text-slate-500 mt-1">0 โพย</div>
-          </div>
-          <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl">
-            <span class="text-xs text-slate-400">ค่าคอมมิชชันตัวแทน</span>
-            <div id="hist-commission" class="text-xl font-bold text-amber-400 mt-1">฿0</div>
-            <div class="text-[11px] text-slate-500 mt-1">จ่ายให้สายเดินโพย</div>
-          </div>
-          <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl">
-            <span class="text-xs text-slate-400">เงินรางวัลที่จ่ายออก</span>
-            <div id="hist-payout" class="text-xl font-bold text-rose-400 mt-1">฿0</div>
-            <div class="text-[11px] text-slate-500 mt-1">ยอดถูกรางวัลรวม</div>
-          </div>
-          <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl">
-            <span class="text-xs text-slate-400">กำไร / ขาดทุนสุทธิ (P&L)</span>
-            <div id="hist-net-pnl" class="text-xl font-bold text-emerald-400 mt-1">฿0</div>
-            <div id="hist-margin-pct" class="text-[11px] text-emerald-400/80 mt-1">Margin: 0%</div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-300 whitespace-nowrap">เลือกดูงวด:</span>
+            <select id="history-period-select" onchange="renderSelectedHistoryPeriod()" class="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-amber-400 font-bold focus:outline-none focus:border-amber-500"></select>
+            <button onclick="printSelectedHistoryReport()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm flex items-center gap-1.5 transition font-semibold">
+              <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์สรุปงวด
+            </button>
           </div>
         </div>
 
-        <!-- Winning Numbers of Selected History Period -->
-        <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-          <h4 class="font-bold text-white text-xs uppercase tracking-wider text-slate-400 mb-3">ผลการออกรางวัลของงวดนี้</h4>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="p-3 bg-slate-900 border border-slate-800 rounded-lg">
-              <span class="text-[11px] text-slate-400">รางวัลที่ 1</span>
-              <div id="hist-prize1" class="font-mono text-lg font-bold text-amber-400 tracking-wider">-</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <span class="text-sm text-slate-400 font-medium">ยอดขายรวมงวดนี้</span>
+            <div id="hist-turnover" class="text-2xl sm:text-3xl font-bold text-white mt-1.5">฿0</div>
+            <div id="hist-tickets-count" class="text-xs text-slate-500 mt-1">0 โพย</div>
+          </div>
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <span class="text-sm text-slate-400 font-medium">ค่าคอมมิชชันตัวแทน</span>
+            <div id="hist-commission" class="text-2xl sm:text-3xl font-bold text-amber-400 mt-1.5">฿0</div>
+            <div class="text-xs text-slate-500 mt-1">จ่ายให้สายเดินโพย</div>
+          </div>
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <span class="text-sm text-slate-400 font-medium">เงินรางวัลที่จ่ายออก</span>
+            <div id="hist-payout" class="text-2xl sm:text-3xl font-bold text-rose-400 mt-1.5">฿0</div>
+            <div class="text-xs text-slate-500 mt-1">ยอดถูกรางวัลรวม</div>
+          </div>
+          <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <span class="text-sm text-slate-400 font-medium">กำไร / ขาดทุนสุทธิ (P&L)</span>
+            <div id="hist-net-pnl" class="text-2xl sm:text-3xl font-bold text-emerald-400 mt-1.5">฿0</div>
+            <div id="hist-margin-pct" class="text-xs text-emerald-400/80 mt-1 font-bold">Margin: 0%</div>
+          </div>
+        </div>
+
+        <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+          <h4 class="font-bold text-sm uppercase tracking-wider text-slate-400 mb-3">ผลการออกรางวัลของงวดนี้</h4>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl text-center">
+              <span class="text-xs text-slate-400">รางวัลที่ 1</span>
+              <div id="hist-prize1" class="font-mono text-xl font-bold text-amber-400 tracking-wider">-</div>
             </div>
-            <div class="p-3 bg-slate-900 border border-slate-800 rounded-lg">
-              <span class="text-[11px] text-slate-400">3 ตัวบน (ท้ายรางวัลที่ 1)</span>
-              <div id="hist-3top" class="font-mono text-lg font-bold text-amber-400">-</div>
+            <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl text-center">
+              <span class="text-xs text-slate-400">3 ตัวบน</span>
+              <div id="hist-3top" class="font-mono text-xl font-bold text-amber-400">-</div>
             </div>
-            <div class="p-3 bg-slate-900 border border-slate-800 rounded-lg">
-              <span class="text-[11px] text-slate-400">2 ตัวบน</span>
-              <div id="hist-2top" class="font-mono text-lg font-bold text-amber-400">-</div>
+            <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl text-center">
+              <span class="text-xs text-slate-400">2 ตัวบน</span>
+              <div id="hist-2top" class="font-mono text-xl font-bold text-amber-400">-</div>
             </div>
-            <div class="p-3 bg-slate-900 border border-slate-800 rounded-lg">
-              <span class="text-[11px] text-slate-400">เลขท้าย 2 ตัวล่าง</span>
-              <div id="hist-2bot" class="font-mono text-lg font-bold text-emerald-400">-</div>
+            <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl text-center">
+              <span class="text-xs text-slate-400">เลขท้าย 2 ตัวล่าง</span>
+              <div id="hist-2bot" class="font-mono text-xl font-bold text-emerald-400">-</div>
+            </div>
+            <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl text-center col-span-2">
+              <span class="text-xs text-slate-400">เลขหน้า 3 ตัว</span>
+              <div id="hist-3front" class="font-mono text-lg font-bold text-blue-400">-</div>
+            </div>
+            <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl text-center col-span-2">
+              <span class="text-xs text-slate-400">เลขท้าย 3 ตัว / 3 ตัวล่าง</span>
+              <div id="hist-3bot" class="font-mono text-lg font-bold text-indigo-400">-</div>
             </div>
           </div>
         </div>
 
-        <!-- History Tickets & Winners Table -->
-        <div class="p-5 bg-slate-950 border border-slate-800 rounded-xl">
-          <div class="flex items-center justify-between mb-4">
-            <h4 class="font-bold text-white text-sm">รายการโพยและรายการถูกรางวัลในงวดนี้</h4>
+        <div class="p-5 bg-slate-950 border border-slate-800 rounded-2xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+            <div>
+              <h4 class="font-bold text-white text-base">รายการโพยย้อนหลังในงวดนี้</h4>
+              <p class="text-xs sm:text-sm text-slate-400">คลิก "ดูโพย" เพื่อดูตัวเลขที่แทง หรือสั่งพิมพ์สลิปโพยย้อนหลังได้</p>
+            </div>
             <div class="flex items-center gap-2">
-              <button onclick="filterHistoryTickets('ALL')" id="hist-filter-all" class="px-2.5 py-1 text-xs rounded bg-slate-800 text-white">ทั้งหมด</button>
-              <button onclick="filterHistoryTickets('WIN')" id="hist-filter-win" class="px-2.5 py-1 text-xs rounded bg-slate-900 text-slate-400 hover:text-white">เฉพาะที่ถูกรางวัล</button>
+              <button onclick="filterHistoryTickets('ALL')" id="hist-filter-all" class="px-3 py-1.5 text-xs sm:text-sm rounded-xl bg-slate-800 text-white font-medium">ทั้งหมด</button>
+              <button onclick="filterHistoryTickets('WIN')" id="hist-filter-win" class="px-3 py-1.5 text-xs sm:text-sm rounded-xl bg-slate-900 text-slate-400 hover:text-white font-medium">เฉพาะที่ถูกรางวัล</button>
             </div>
           </div>
-          <div class="overflow-x-auto max-h-80 overflow-y-auto">
-            <table class="w-full text-left text-xs">
+          <div class="overflow-x-auto -mx-5 sm:mx-0 max-h-96 overflow-y-auto">
+            <table class="w-full text-left text-sm min-w-[650px]">
               <thead class="text-slate-400 bg-slate-900 border-b border-slate-800 sticky top-0">
                 <tr>
-                  <th class="p-3">เลขที่โพย</th>
-                  <th class="p-3">ตัวแทน / สาย</th>
-                  <th class="p-3">ลูกค้า</th>
-                  <th class="p-3 text-right">ยอดแทง</th>
-                  <th class="p-3 text-right">ยอดถูกรางวัล</th>
-                  <th class="p-3 text-center">สถานะ</th>
+                  <th class="p-3.5">เลขที่โพย</th>
+                  <th class="p-3.5">ตัวแทน / สาย</th>
+                  <th class="p-3.5">ลูกค้า</th>
+                  <th class="p-3.5 text-right">ยอดแทง</th>
+                  <th class="p-3.5 text-right">ยอดถูกรางวัล</th>
+                  <th class="p-3.5 text-center">สถานะ</th>
+                  <th class="p-3.5 text-center">รายละเอียด</th>
                 </tr>
               </thead>
-              <tbody id="history-tickets-table-body" class="divide-y divide-slate-800">
-                <!-- Dynamically populated -->
-              </tbody>
+              <tbody id="history-tickets-table-body" class="divide-y divide-slate-800"></tbody>
             </table>
           </div>
         </div>
@@ -669,10 +918,10 @@
   <!-- ================= MODALS ================= -->
 
   <!-- Modal: Open New Period -->
-  <div id="modal-new-period" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+  <div id="modal-new-period" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-white flex items-center gap-2">
+        <h3 class="font-bold text-white text-lg flex items-center gap-2">
           <i data-lucide="calendar-plus" class="w-5 h-5 text-amber-500"></i> เปิดรับแทงงวดใหม่
         </h3>
         <button onclick="closeNewPeriodModal()" class="text-slate-400 hover:text-white">
@@ -680,64 +929,69 @@
         </button>
       </div>
       <div>
-        <label class="block text-xs font-medium text-slate-400 mb-1">ชื่องวดประจำวันที่</label>
-        <input type="text" id="new-period-name-input" value="16 ตุลาคม" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">ชื่องวดประจำวันที่</label>
+        <input type="text" id="new-period-name-input" value="16 ตุลาคม" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base text-white focus:outline-none focus:border-amber-500">
       </div>
       <div>
-        <label class="block text-xs font-medium text-slate-400 mb-1">กำหนดเวลาปิดรับแทง (Cutoff Time)</label>
-        <input type="text" id="new-period-cutoff-input" value="15:30 น." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">เวลาปิดรับแทง (Cutoff Time)</label>
+        <input type="text" id="new-period-cutoff-input" value="15:30 น." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base text-white focus:outline-none focus:border-amber-500">
       </div>
       <div class="space-y-2 pt-1">
-        <label class="flex items-center gap-2 text-xs text-slate-300">
+        <label class="flex items-center gap-2 text-sm text-slate-300">
           <input type="checkbox" id="copy-capped-checkbox" checked class="rounded bg-slate-950 border-slate-800 text-amber-500 focus:ring-0">
-          <span>คัดลอกรายการเลขอั้นยอดนิยมจากระบบเริ่มต้น</span>
+          <span>คัดลอกรายการเลขอั้นยอดนิยมเริ่มต้น</span>
         </label>
       </div>
       <div class="flex gap-3 pt-3">
-        <button onclick="closeNewPeriodModal()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition">ยกเลิก</button>
-        <button onclick="confirmOpenNewPeriod()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg transition">ยืนยันเปิดงวด</button>
+        <button onclick="closeNewPeriodModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-xl transition">ยกเลิก</button>
+        <button onclick="confirmOpenNewPeriod()" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-xl transition shadow-md shadow-amber-500/20">ยืนยันเปิดงวด</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: View Ticket Details -->
-  <div id="modal-ticket-detail" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+  <!-- Modal: View Ticket Details & Print Option -->
+  <div id="modal-ticket-detail" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div>
-          <h3 id="modal-tkt-id" class="font-bold text-white font-mono">TKT-xxxx</h3>
-          <p id="modal-tkt-meta" class="text-xs text-slate-400">-</p>
+          <h3 id="modal-tkt-id" class="font-bold text-white font-mono text-base sm:text-lg">TKT-xxxx</h3>
+          <p id="modal-tkt-meta" class="text-xs sm:text-sm text-slate-400 mt-0.5">-</p>
         </div>
         <button onclick="closeTicketDetailModal()" class="text-slate-400 hover:text-white">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      <div class="max-h-72 overflow-y-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="text-slate-400 bg-slate-950 border-b border-slate-800">
+      <div class="max-h-72 overflow-y-auto -mx-2 sm:mx-0">
+        <table class="w-full text-left text-sm min-w-[360px]">
+          <thead class="text-slate-400 bg-slate-950 border-b border-slate-800 sticky top-0">
             <tr>
-              <th class="p-2">ประเภท</th>
-              <th class="p-2">ตัวเลข</th>
-              <th class="p-2 text-right">ยอดแทง</th>
-              <th class="p-2 text-right">เรตจ่าย</th>
-              <th class="p-2 text-right">ผลรางวัล</th>
+              <th class="p-2.5">ประเภทรางวัล</th>
+              <th class="p-2.5">ตัวเลข</th>
+              <th class="p-2.5 text-right">ยอดแทง</th>
+              <th class="p-2.5 text-right">เรตจ่าย</th>
+              <th class="p-2.5 text-right">ผลรางวัล</th>
             </tr>
           </thead>
           <tbody id="modal-tkt-items-body" class="divide-y divide-slate-800"></tbody>
         </table>
       </div>
-      <div class="flex justify-between items-center text-xs border-t border-slate-800 pt-3">
-        <span class="text-slate-400">ยอดรวมสุทธิ: <strong id="modal-tkt-total" class="text-emerald-400 font-mono">฿0</strong></span>
-        <button onclick="closeTicketDetailModal()" class="px-4 py-1.5 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700">ปิด</button>
+      <div class="flex justify-between items-center text-sm border-t border-slate-800 pt-3.5">
+        <span class="text-slate-300">ยอดรวมแทง: <strong id="modal-tkt-total" class="text-emerald-400 font-mono text-lg">฿0</strong></span>
+        <div class="flex items-center gap-2">
+          <button id="modal-tkt-print-btn" onclick="printModalCurrentTicket()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl flex items-center gap-1.5 transition text-sm shadow-md shadow-amber-500/20">
+            <i data-lucide="printer" class="w-4 h-4"></i> พิมพ์สลิปโพยนี้
+          </button>
+          <button onclick="closeTicketDetailModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 text-sm font-semibold">ปิด</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Modal: Add New Agent -->
-  <div id="modal-add-agent" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+  <div id="modal-add-agent" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-white flex items-center gap-2">
+        <h3 class="font-bold text-white text-lg flex items-center gap-2">
           <i data-lucide="user-plus" class="w-5 h-5 text-amber-500"></i> เพิ่มตัวแทนจำหน่ายใหม่
         </h3>
         <button onclick="closeAddAgentModal()" class="text-slate-400 hover:text-white">
@@ -745,53 +999,76 @@
         </button>
       </div>
       <div>
-        <label class="block text-xs font-medium text-slate-400 mb-1">ชื่อตัวแทน / สายงาน</label>
-        <input type="text" id="new-agent-name" placeholder="เช่น สายเจ๊พร, พี่สมชาย ตลาดสด" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">ชื่อตัวแทน / สายงาน</label>
+        <input type="text" id="new-agent-name" placeholder="เช่น สายเจ๊พร, พี่สมชาย ตลาดสด" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base text-white focus:outline-none focus:border-amber-500">
       </div>
       <div>
-        <label class="block text-xs font-medium text-slate-400 mb-1">เบอร์โทรศัพท์</label>
-        <input type="text" id="new-agent-phone" placeholder="08x-xxx-xxxx" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+        <label class="block text-sm font-medium text-slate-300 mb-1.5">เบอร์โทรศัพท์</label>
+        <input type="text" id="new-agent-phone" placeholder="08x-xxx-xxxx" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base text-white focus:outline-none focus:border-amber-500">
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">คอมมิชชัน (%)</label>
-          <input type="number" id="new-agent-comm" value="15" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">คอมมิชชัน (%)</label>
+          <input type="number" id="new-agent-comm" value="15" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base text-white focus:outline-none focus:border-amber-500 font-mono">
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">วงเงินเครดิต (฿)</label>
-          <input type="number" id="new-agent-credit" value="100000" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+          <label class="block text-sm font-medium text-slate-300 mb-1.5">วงเงินเครดิต (฿)</label>
+          <input type="number" id="new-agent-credit" value="100000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base text-white focus:outline-none focus:border-amber-500 font-mono">
         </div>
       </div>
       <div class="flex gap-3 pt-3">
-        <button onclick="closeAddAgentModal()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition">ยกเลิก</button>
-        <button onclick="confirmAddNewAgent()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg transition">บันทึกตัวแทน</button>
+        <button onclick="closeAddAgentModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-xl transition">ยกเลิก</button>
+        <button onclick="confirmAddNewAgent()" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-xl transition shadow-md shadow-amber-500/20">บันทึกตัวแทน</button>
       </div>
     </div>
   </div>
 
+  <!-- ================= PRINT CONTAINER (Hidden in screen, Visible in Print) ================= -->
+  <div id="print-area"></div>
+
   <!-- ================= APPLICATION JAVASCRIPT ================= -->
   <script>
-    // --- 1. DEFAULT BASE RATES & RISK LIMITS ---
-    const BASE_RATES = {
-      '3TOP': 900,
-      '3TOD': 130,
-      '2TOP': 95,
-      '2BOT': 95,
-      'RUN_TOP': 3.2,
-      'RUN_BOT': 4.2
+    // --- 1. THAI LABELS MAPPER ---
+    const BET_TYPE_LABELS = {
+      '3TOP': '3 ตัวบน',
+      '3TOD': '3 ตัวโต๊ด',
+      '3FRONT': '3 ตัวหน้า',
+      '3BOT': '3 ตัวล่าง',
+      '2TOP': '2 ตัวบน',
+      '2BOT': '2 ตัวล่าง',
+      'RUN_TOP': 'เลขวิ่งบน',
+      'RUN_BOT': 'เลขวิ่งล่าง'
     };
 
-    const RISK_LIMITS = {
-      '3TOP': 250000,
-      '3TOD': 100000,
-      '2TOP': 100000,
-      '2BOT': 100000,
-      'RUN_TOP': 150000,
-      'RUN_BOT': 150000
+    function getThaiLabel(type) {
+      return BET_TYPE_LABELS[type] || type;
+    }
+
+    // --- 2. DEFAULT CONFIGURATION (RATES & LIMITS) ---
+    let appConfig = {
+      baseRates: {
+        '3TOP': 900,
+        '3TOD': 130,
+        '3FRONT': 450,
+        '3BOT': 450,
+        '2TOP': 95,
+        '2BOT': 95,
+        'RUN_TOP': 3.2,
+        'RUN_BOT': 4.2
+      },
+      riskLimits: {
+        '3TOP': 250000,
+        '3TOD': 100000,
+        '3FRONT': 150000,
+        '3BOT': 150000,
+        '2TOP': 100000,
+        '2BOT': 100000,
+        'RUN_TOP': 150000,
+        'RUN_BOT': 150000
+      }
     };
 
-    // --- 2. PRE-POPULATED HISTORICAL ARCHIVES (3 PAST PERIODS) ---
-    // Note: Period 16/10 is NOT created yet as requested, ready for user testing!
+    // --- 3. CONSISTENT PAST PERIODS DATA ---
     const INITIAL_HISTORICAL_PERIODS = [
       {
         id: 'PERIOD-20260901',
@@ -803,21 +1080,83 @@
           top3: '652',
           top2: '52',
           bot2: '55',
+          front3: ['285', '037'],
+          bot3: ['569', '891'],
           tod3: ['652', '625', '562', '526', '265', '256']
         },
         financials: {
-          grossTurnover: 1250000,
-          hedgedAmount: 180000,
-          retainedSales: 1070000,
-          commissionsPaid: 187500,
-          payoutAmount: 645000,
-          netPnL: 237500 // Profit
+          grossTurnover: 162000,
+          hedgedAmount: 20000,
+          retainedSales: 142000,
+          commissionsPaid: 24520,
+          payoutAmount: 227500,
+          netPnL: -90020
         },
         tickets: [
-          { id: 'TKT-0901-01', agent: 'เจ๊หงส์ เยาวราช', customer: 'ลูกค้าร้านทอง', gross: 25000, won: 0, status: 'LOSS' },
-          { id: 'TKT-0901-02', agent: 'นายดวง บางแค', customer: 'วินมอเตอร์ไซค์', gross: 12000, won: 47500, status: 'WON' },
-          { id: 'TKT-0901-03', agent: 'ป้าพร ประตูน้ำ', customer: 'ตลาดผลไม้', gross: 45000, won: 180000, status: 'WON' },
-          { id: 'TKT-0901-04', agent: 'เฮียไช้ พระราม 2', customer: 'อู่ช่างเล็ก', gross: 80000, won: 0, status: 'LOSS' }
+          {
+            id: 'TKT-0901-01',
+            agentName: 'เจ๊หงส์ เยาวราช',
+            customer: 'ลูกค้าร้านทอง',
+            createdAt: '11:15 น.',
+            gross: 25000,
+            discount: 4000,
+            net: 21000,
+            won: 0,
+            status: 'LOSS',
+            items: [
+              { betType: '3TOP', number: '905', amount: 5000, rate: 900, isWin: false, winAmount: 0 },
+              { betType: '2TOP', number: '05', amount: 10000, rate: 95, isWin: false, winAmount: 0 },
+              { betType: '2BOT', number: '28', amount: 10000, rate: 95, isWin: false, winAmount: 0 }
+            ]
+          },
+          {
+            id: 'TKT-0901-02',
+            agentName: 'นายดวง บางแค',
+            customer: 'วินมอเตอร์ไซค์',
+            createdAt: '13:40 น.',
+            gross: 12000,
+            discount: 1680,
+            net: 10320,
+            won: 47500,
+            status: 'WON',
+            items: [
+              { betType: '2TOP', number: '52', amount: 500, rate: 95, isWin: true, winAmount: 47500 },
+              { betType: '2BOT', number: '89', amount: 5000, rate: 95, isWin: false, winAmount: 0 },
+              { betType: 'RUN_TOP', number: '1', amount: 6500, rate: 3.2, isWin: false, winAmount: 0 }
+            ]
+          },
+          {
+            id: 'TKT-0901-03',
+            agentName: 'ป้าพร ประตูน้ำ',
+            customer: 'ตลาดผลไม้',
+            createdAt: '14:22 น.',
+            gross: 45000,
+            discount: 6750,
+            net: 38250,
+            won: 180000,
+            status: 'WON',
+            items: [
+              { betType: '3TOP', number: '652', amount: 200, rate: 900, isWin: true, winAmount: 180000 },
+              { betType: '3FRONT', number: '111', amount: 20000, rate: 450, isWin: false, winAmount: 0 },
+              { betType: '3TOD', number: '333', amount: 24800, rate: 130, isWin: false, winAmount: 0 }
+            ]
+          },
+          {
+            id: 'TKT-0901-04',
+            agentName: 'เฮียไช้ พระราม 2',
+            customer: 'อู่ช่างเล็ก',
+            createdAt: '15:10 น.',
+            gross: 80000,
+            discount: 12000,
+            net: 68000,
+            won: 0,
+            status: 'LOSS',
+            items: [
+              { betType: '3TOP', number: '777', amount: 20000, rate: 900, isWin: false, winAmount: 0 },
+              { betType: '2TOP', number: '11', amount: 30000, rate: 95, isWin: false, winAmount: 0 },
+              { betType: '2BOT', number: '00', amount: 30000, rate: 95, isWin: false, winAmount: 0 }
+            ]
+          }
         ]
       },
       {
@@ -830,20 +1169,50 @@
           top3: '894',
           top2: '94',
           bot2: '28',
+          front3: ['125', '350'],
+          bot3: ['048', '627'],
           tod3: ['894', '849', '984', '948', '489', '498']
         },
         financials: {
-          grossTurnover: 1480000,
-          hedgedAmount: 320000,
-          retainedSales: 1160000,
-          commissionsPaid: 222000,
-          payoutAmount: 1620000,
-          netPnL: -682000 // Loss due to popular number 28 & 94
+          grossTurnover: 180000,
+          hedgedAmount: 35000,
+          retainedSales: 145000,
+          commissionsPaid: 27600,
+          payoutAmount: 850000,
+          netPnL: -697600
         },
         tickets: [
-          { id: 'TKT-0916-01', agent: 'เจ๊หงส์ เยาวราช', customer: 'คณะทัวร์', gross: 120000, won: 475000, status: 'WON' },
-          { id: 'TKT-0916-02', agent: 'นายดวง บางแค', customer: 'เจ๊แตนผลไม้', gross: 60000, won: 285000, status: 'WON' },
-          { id: 'TKT-0916-03', agent: 'ป้าพร ประตูน้ำ', customer: 'แม่ค้าเสื้อผ้า', gross: 95000, won: 450000, status: 'WON' }
+          {
+            id: 'TKT-0916-01',
+            agentName: 'เจ๊หงส์ เยาวราช',
+            customer: 'คณะทัวร์',
+            createdAt: '12:05 น.',
+            gross: 120000,
+            discount: 19200,
+            net: 100800,
+            won: 565000,
+            status: 'WON',
+            items: [
+              { betType: '2BOT', number: '28', amount: 5000, rate: 95, isWin: true, winAmount: 475000 },
+              { betType: '3TOP', number: '894', amount: 100, rate: 900, isWin: true, winAmount: 90000 },
+              { betType: '2TOP', number: '00', amount: 114900, rate: 95, isWin: false, winAmount: 0 }
+            ]
+          },
+          {
+            id: 'TKT-0916-02',
+            agentName: 'นายดวง บางแค',
+            customer: 'เจ๊แตนผลไม้',
+            createdAt: '14:50 น.',
+            gross: 60000,
+            discount: 8400,
+            net: 51600,
+            won: 285000,
+            status: 'WON',
+            items: [
+              { betType: '2TOP', number: '94', amount: 3000, rate: 95, isWin: true, winAmount: 285000 },
+              { betType: '2BOT', number: '55', amount: 57000, rate: 95, isWin: false, winAmount: 0 }
+            ]
+          }
         ]
       },
       {
@@ -856,27 +1225,57 @@
           top3: '037',
           top2: '37',
           bot2: '09',
+          front3: ['285', '412'],
+          bot3: ['058', '991'],
           tod3: ['037', '073', '307', '370', '703', '730']
         },
         financials: {
-          grossTurnover: 1320000,
-          hedgedAmount: 210000,
-          retainedSales: 1110000,
-          commissionsPaid: 198000,
-          payoutAmount: 780000,
-          netPnL: 132000 // Profit
+          grossTurnover: 120000,
+          hedgedAmount: 15000,
+          retainedSales: 105000,
+          commissionsPaid: 18850,
+          payoutAmount: 142500,
+          netPnL: -41350
         },
         tickets: [
-          { id: 'TKT-1001-01', agent: 'ป้าพร ประตูน้ำ', customer: 'ป้าณี ประตูน้ำ', gross: 35000, won: 95000, status: 'WON' },
-          { id: 'TKT-1001-02', agent: 'เจ๊หงส์ เยาวราช', customer: 'เฮียเบิ้ม', gross: 85000, won: 0, status: 'LOSS' },
-          { id: 'TKT-1001-03', agent: 'เฮียไช้ พระราม 2', customer: 'ร้านซ่อมรถ', gross: 40000, won: 0, status: 'LOSS' }
+          {
+            id: 'TKT-1001-01',
+            agentName: 'ป้าพร ประตูน้ำ',
+            customer: 'ป้าณี ประตูน้ำ',
+            createdAt: '10:45 น.',
+            gross: 35000,
+            discount: 5250,
+            net: 29750,
+            won: 142500,
+            status: 'WON',
+            items: [
+              { betType: '2TOP', number: '37', amount: 1000, rate: 95, isWin: true, winAmount: 95000 },
+              { betType: '2BOT', number: '09', amount: 500, rate: 95, isWin: true, winAmount: 47500 },
+              { betType: '3TOP', number: '123', amount: 33500, rate: 900, isWin: false, winAmount: 0 }
+            ]
+          },
+          {
+            id: 'TKT-1001-02',
+            agentName: 'เจ๊หงส์ เยาวราช',
+            customer: 'เฮียเบิ้ม',
+            createdAt: '14:15 น.',
+            gross: 85000,
+            discount: 13600,
+            net: 71400,
+            won: 0,
+            status: 'LOSS',
+            items: [
+              { betType: '3TOP', number: '999', amount: 20000, rate: 900, isWin: false, winAmount: 0 },
+              { betType: '2BOT', number: '99', amount: 65000, rate: 95, isWin: false, winAmount: 0 }
+            ]
+          }
         ]
       }
     ];
 
-    // --- 3. SYSTEM STATE ---
+    // --- 4. SYSTEM STATE ---
     let appState = {
-      activePeriod: null, // Currently null, user will click "เปิดงวดใหม่"
+      activePeriod: null,
       historyPeriods: JSON.parse(JSON.stringify(INITIAL_HISTORICAL_PERIODS)),
       agents: [
         { id: 'AG-01', name: 'เจ๊หงส์ เยาวราช', phone: '081-445-9988', commissionRate: 16, creditLimit: 500000, currentSales: 0 },
@@ -886,32 +1285,76 @@
       ],
       currentTickets: [],
       currentCappedNumbers: [],
-      hedgedRecords: {} // Map key "TYPE:NUMBER" -> amount
+      hedgedRecords: {},
+      lastActiveTicket: null,
+      modalViewingTicket: null
     };
 
     let chartInstances = {};
 
-    // --- 4. INITIALIZATION ---
+    // --- 5. INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       initHistorySelect();
       renderAgentsDropdown();
       renderAgentsTable();
       renderCappedTable();
+      populateSettingsInputs();
       updateSidebarPeriodStatus();
       updateDashboardStats();
     });
 
-    // --- 5. TAB SWITCHING LOGIC ---
+    // --- 6. TABLET TOUCH NUMPAD HELPERS ---
+    function insertTerminalText(text) {
+      const el = document.getElementById('entry-raw-text');
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const val = el.value;
+      el.value = val.substring(0, start) + text + val.substring(end);
+      el.selectionStart = el.selectionEnd = start + text.length;
+      el.focus();
+    }
+
+    function backspaceTerminalText() {
+      const el = document.getElementById('entry-raw-text');
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const val = el.value;
+      if (start === end && start > 0) {
+        el.value = val.substring(0, start - 1) + val.substring(end);
+        el.selectionStart = el.selectionEnd = start - 1;
+      } else if (start !== end) {
+        el.value = val.substring(0, start) + val.substring(end);
+        el.selectionStart = el.selectionEnd = start;
+      }
+      el.focus();
+    }
+
+    // --- 7. RESPONSIVE SIDEBAR TOGGLE ---
+    function toggleSidebar(open) {
+      const sidebar = document.getElementById('main-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (open) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    // --- 8. TAB SWITCHING ---
     function switchTab(tabId) {
-      const tabs = ['dashboard', 'entry', 'risk', 'capped', 'agents', 'period', 'settlement', 'history'];
+      if (window.innerWidth < 1024) toggleSidebar(false);
+
+      const tabs = ['dashboard', 'entry', 'risk', 'capped', 'settings', 'agents', 'period', 'settlement', 'history'];
       tabs.forEach(t => {
         const el = document.getElementById(`tab-${t}`);
         const btn = document.getElementById(`nav-${t}`);
         if (el) el.classList.add('hidden');
         if (btn) {
           btn.classList.remove('text-amber-400', 'bg-slate-800/80');
-          btn.classList.add('text-slate-400');
+          btn.classList.add('text-slate-300');
         }
       });
 
@@ -920,23 +1363,22 @@
       if (targetEl) targetEl.classList.remove('hidden');
       if (targetBtn) {
         targetBtn.classList.add('text-amber-400', 'bg-slate-800/80');
-        targetBtn.classList.remove('text-slate-400');
+        targetBtn.classList.remove('text-slate-300');
       }
 
-      // Title updates
       const titles = {
         dashboard: 'ภาพรวมงวดปัจจุบัน',
-        entry: 'คีย์โพยด่วน (Terminal)',
+        entry: 'คีย์โพยด่วน (Tablet)',
         risk: 'บริหารความเสี่ยง (Risk Matrix)',
-        capped: 'จัดการเลขอั้น & อัตราจ่ายพิเศษ',
+        capped: 'จัดการเลขอั้น & เรตพิเศษ',
+        settings: 'อัตราจ่าย & เพดานความเสี่ยง',
         agents: 'ทะเบียนตัวแทนจำหน่าย',
         period: 'จัดการงวด / ปิดงวด',
-        settlement: 'ออกรางวัล & ตัดยอดกำไรขาดทุน',
+        settlement: 'ออกรางวัล & ตัดยอด',
         history: 'คลังข้อมูลและสถิติงวดย้อนหลัง'
       };
       document.getElementById('page-title').innerText = titles[tabId] || 'ระบบจัดการหวย';
 
-      // Refresh specific tab contents
       if (tabId === 'dashboard') {
         updateDashboardStats();
         setTimeout(renderDashboardCharts, 100);
@@ -950,7 +1392,64 @@
       lucide.createIcons();
     }
 
-    // --- 6. PERIOD MANAGEMENT (OPEN / CLOSE / ARCHIVE) ---
+    // --- 9. SETTINGS & RISK LIMITS ---
+    function populateSettingsInputs() {
+      const r = appConfig.baseRates;
+      const c = appConfig.riskLimits;
+      document.getElementById('cfg-rate-3top').value = r['3TOP'];
+      document.getElementById('cfg-rate-3tod').value = r['3TOD'];
+      document.getElementById('cfg-rate-3front').value = r['3FRONT'];
+      document.getElementById('cfg-rate-3bot').value = r['3BOT'];
+      document.getElementById('cfg-rate-2top').value = r['2TOP'];
+      document.getElementById('cfg-rate-2bot').value = r['2BOT'];
+      document.getElementById('cfg-rate-runtop').value = r['RUN_TOP'];
+      document.getElementById('cfg-rate-runbot').value = r['RUN_BOT'];
+
+      document.getElementById('cfg-cap-3top').value = c['3TOP'];
+      document.getElementById('cfg-cap-3tod').value = c['3TOD'];
+      document.getElementById('cfg-cap-3front').value = c['3FRONT'];
+      document.getElementById('cfg-cap-3bot').value = c['3BOT'];
+      document.getElementById('cfg-cap-2all').value = c['2TOP'];
+      document.getElementById('cfg-cap-runall').value = c['RUN_TOP'];
+
+      updateRiskCapsSummaryText();
+    }
+
+    function saveSettingsConfiguration() {
+      appConfig.baseRates['3TOP'] = parseFloat(document.getElementById('cfg-rate-3top').value) || 900;
+      appConfig.baseRates['3TOD'] = parseFloat(document.getElementById('cfg-rate-3tod').value) || 130;
+      appConfig.baseRates['3FRONT'] = parseFloat(document.getElementById('cfg-rate-3front').value) || 450;
+      appConfig.baseRates['3BOT'] = parseFloat(document.getElementById('cfg-rate-3bot').value) || 450;
+      appConfig.baseRates['2TOP'] = parseFloat(document.getElementById('cfg-rate-2top').value) || 95;
+      appConfig.baseRates['2BOT'] = parseFloat(document.getElementById('cfg-rate-2bot').value) || 95;
+      appConfig.baseRates['RUN_TOP'] = parseFloat(document.getElementById('cfg-rate-runtop').value) || 3.2;
+      appConfig.baseRates['RUN_BOT'] = parseFloat(document.getElementById('cfg-rate-runbot').value) || 4.2;
+
+      appConfig.riskLimits['3TOP'] = parseFloat(document.getElementById('cfg-cap-3top').value) || 250000;
+      appConfig.riskLimits['3TOD'] = parseFloat(document.getElementById('cfg-cap-3tod').value) || 100000;
+      appConfig.riskLimits['3FRONT'] = parseFloat(document.getElementById('cfg-cap-3front').value) || 150000;
+      appConfig.riskLimits['3BOT'] = parseFloat(document.getElementById('cfg-cap-3bot').value) || 150000;
+      
+      const cap2 = parseFloat(document.getElementById('cfg-cap-2all').value) || 100000;
+      appConfig.riskLimits['2TOP'] = cap2;
+      appConfig.riskLimits['2BOT'] = cap2;
+
+      const capRun = parseFloat(document.getElementById('cfg-cap-runall').value) || 150000;
+      appConfig.riskLimits['RUN_TOP'] = capRun;
+      appConfig.riskLimits['RUN_BOT'] = capRun;
+
+      updateRiskCapsSummaryText();
+      showAlert('บันทึกการตั้งค่าอัตราจ่ายและเพดานความเสี่ยงสำเร็จ มีผลต่อทั้งระบบทันที', 'success');
+    }
+
+    function updateRiskCapsSummaryText() {
+      const t = document.getElementById('risk-caps-summary-text');
+      if (t) {
+        t.innerText = `เพดาน: 3บน=฿${(appConfig.riskLimits['3TOP']/1000)}k | 2ตัว=฿${(appConfig.riskLimits['2TOP']/1000)}k`;
+      }
+    }
+
+    // --- 10. PERIOD MANAGEMENT ---
     function updateSidebarPeriodStatus() {
       const p = appState.activePeriod;
       const sidebarBadge = document.getElementById('sidebar-period-badge');
@@ -966,7 +1465,7 @@
         sidebarBadge.innerText = 'ยังไม่เปิดงวด';
         sidebarName.innerText = 'ไม่มีงวดที่เปิดรับ';
         sidebarTime.innerText = '-';
-        topChip.className = 'badge bg-red-950 text-red-400 border border-red-800';
+        topChip.className = 'hidden sm:inline-flex badge bg-red-950 text-red-400 border border-red-800';
         topChip.innerText = 'ไม่มีงวดที่เปิดรับ';
         if (noAlert) noAlert.classList.remove('hidden');
         if (terminalTag) terminalTag.innerText = 'งวด: ยังไม่เปิดรับ';
@@ -981,7 +1480,7 @@
         sidebarBadge.innerText = isAccepting ? 'เปิดรับแทง' : 'ปิดรับชั่วคราว';
         sidebarName.innerText = p.name;
         sidebarTime.innerText = `ปิดรับ ${p.cutoffTime}`;
-        topChip.className = isAccepting ? 'badge bg-emerald-950 text-emerald-400 border border-emerald-800' : 'badge bg-amber-950 text-amber-400 border border-amber-800';
+        topChip.className = isAccepting ? 'hidden sm:inline-flex badge bg-emerald-950 text-emerald-400 border border-emerald-800' : 'hidden sm:inline-flex badge bg-amber-950 text-amber-400 border border-amber-800';
         topChip.innerText = isAccepting ? `เปิดรับ: ${p.name}` : `ปิดรับ: ${p.name}`;
         if (noAlert) noAlert.classList.add('hidden');
         if (terminalTag) terminalTag.innerText = `งวด: ${p.name} (${p.cutoffTime})`;
@@ -995,19 +1494,14 @@
 
         const toggleBtn = document.getElementById('toggle-period-accept-btn');
         toggleBtn.innerHTML = isAccepting 
-          ? '<i data-lucide="pause-circle" class="w-4 h-4"></i> พักการรับแทงชั่วคราว' 
-          : '<i data-lucide="play-circle" class="w-4 h-4"></i> เปิดรับแทงต่อ';
+          ? '<i data-lucide="pause-circle" class="w-5 h-5"></i> พักการรับแทงชั่วคราว' 
+          : '<i data-lucide="play-circle" class="w-5 h-5"></i> เปิดรับแทงต่อ';
       }
       lucide.createIcons();
     }
 
-    function openNewPeriodModal() {
-      document.getElementById('modal-new-period').classList.remove('hidden');
-    }
-
-    function closeNewPeriodModal() {
-      document.getElementById('modal-new-period').classList.add('hidden');
-    }
+    function openNewPeriodModal() { document.getElementById('modal-new-period').classList.remove('hidden'); }
+    function closeNewPeriodModal() { document.getElementById('modal-new-period').classList.add('hidden'); }
 
     function confirmOpenNewPeriod() {
       const name = document.getElementById('new-period-name-input').value.trim();
@@ -1031,11 +1525,10 @@
       appState.hedgedRecords = {};
       appState.agents.forEach(a => a.currentSales = 0);
 
-      // Setup initial capped numbers if checked
       if (copyCapped) {
         appState.currentCappedNumbers = [
-          { number: '28', betType: 'ALL2', policy: 'HALF', customRate: 47.5 },
-          { number: '95', betType: '2TOP', policy: 'HALF', customRate: 47.5 },
+          { number: '28', betType: 'ALL2', policy: 'HALF', customRate: appConfig.baseRates['2BOT']/2 },
+          { number: '95', betType: '2TOP', policy: 'HALF', customRate: appConfig.baseRates['2TOP']/2 },
           { number: '905', betType: '3TOP', policy: 'CLOSED', customRate: 0 }
         ];
       } else {
@@ -1058,7 +1551,7 @@
       showAlert(`เปลี่ยนสถานะงวดเป็น: ${appState.activePeriod.status}`, 'info');
     }
 
-    // --- 7. FAST TICKET TERMINAL & PARSER ENGINE ---
+    // --- 11. TICKET PARSER & TERMINAL ---
     function renderAgentsDropdown() {
       const select = document.getElementById('entry-agent-select');
       select.innerHTML = appState.agents.map(a => 
@@ -1101,30 +1594,27 @@
     }
 
     function checkCappedRate(betType, number) {
-      // Find matching rule in currentCappedNumbers
       const rule = appState.currentCappedNumbers.find(c => {
         if (c.number !== number) return false;
         if (c.betType === 'ALL2' && (betType === '2TOP' || betType === '2BOT')) return true;
         return c.betType === betType;
       });
 
-      if (!rule) {
-        return { isCapped: false, policy: 'NORMAL', rate: BASE_RATES[betType] };
-      }
+      const base = appConfig.baseRates[betType] || 90;
 
+      if (!rule) {
+        return { isCapped: false, policy: 'NORMAL', rate: base };
+      }
       if (rule.policy === 'CLOSED') {
         return { isCapped: true, policy: 'CLOSED', rate: 0 };
       }
-
       if (rule.policy === 'HALF') {
-        return { isCapped: true, policy: 'HALF', rate: BASE_RATES[betType] / 2 };
+        return { isCapped: true, policy: 'HALF', rate: base / 2 };
       }
-
       if (rule.policy === 'CUSTOM') {
         return { isCapped: true, policy: 'CUSTOM', rate: rule.customRate };
       }
-
-      return { isCapped: false, policy: 'NORMAL', rate: BASE_RATES[betType] };
+      return { isCapped: false, policy: 'NORMAL', rate: base };
     }
 
     function parseAndPreviewTicket() {
@@ -1152,7 +1642,33 @@
       let rejectedItems = [];
 
       lines.forEach(line => {
-        // Syntax 1: 19 ประตู (e.g. "7 19ประตู = 50x50" or "8 19ประตู = 100")
+        // 3 ตัวหน้าตรง: "3หน้า 285 = 100"
+        if (line.includes('3หน้า') || line.includes('หน้า3')) {
+          let parts = line.split(/[=:]/);
+          let num = parts[0].replace(/[^0-9]/g, '');
+          let amt = parts[1] ? parseFloat(parts[1].trim()) || 0 : 0;
+          if (num.length === 3 && amt > 0) {
+            let cap = checkCappedRate('3FRONT', num);
+            if (cap.policy === 'CLOSED') rejectedItems.push(`3ตัวหน้า ${num} (งดรับ)`);
+            else parsedItems.push({ betType: '3FRONT', number: num, amount: amt, rate: cap.rate, isCapped: cap.isCapped });
+          }
+          return;
+        }
+
+        // 3 ตัวล่าง/ท้าย: "3ล่าง 905 = 100"
+        if (line.includes('3ล่าง') || line.includes('ท้าย3')) {
+          let parts = line.split(/[=:]/);
+          let num = parts[0].replace(/[^0-9]/g, '');
+          let amt = parts[1] ? parseFloat(parts[1].trim()) || 0 : 0;
+          if (num.length === 3 && amt > 0) {
+            let cap = checkCappedRate('3BOT', num);
+            if (cap.policy === 'CLOSED') rejectedItems.push(`3ตัวล่าง ${num} (งดรับ)`);
+            else parsedItems.push({ betType: '3BOT', number: num, amount: amt, rate: cap.rate, isCapped: cap.isCapped });
+          }
+          return;
+        }
+
+        // 19 ประตู
         if (line.includes('19ประตู') || line.includes('19')) {
           let parts = line.split(/[=:]/);
           let num = parts[0].replace(/[^0-9]/g, '');
@@ -1162,7 +1678,6 @@
 
           if (num && num.length === 1) {
             let digit = num;
-            // Generate 19 pairs
             let pairs = [];
             for (let i = 0; i <= 9; i++) pairs.push(`${digit}${i}`);
             for (let i = 0; i <= 9; i++) {
@@ -1171,12 +1686,12 @@
             pairs.forEach(p => {
               if (topAmt > 0) {
                 let cap = checkCappedRate('2TOP', p);
-                if (cap.policy === 'CLOSED') rejectedItems.push(`2บน ${p} (งดรับ)`);
+                if (cap.policy === 'CLOSED') rejectedItems.push(`2ตัวบน ${p} (งดรับ)`);
                 else parsedItems.push({ betType: '2TOP', number: p, amount: topAmt, rate: cap.rate, isCapped: cap.isCapped });
               }
               if (botAmt > 0) {
                 let cap = checkCappedRate('2BOT', p);
-                if (cap.policy === 'CLOSED') rejectedItems.push(`2ล่าง ${p} (งดรับ)`);
+                if (cap.policy === 'CLOSED') rejectedItems.push(`2ตัวล่าง ${p} (งดรับ)`);
                 else parsedItems.push({ betType: '2BOT', number: p, amount: botAmt, rate: cap.rate, isCapped: cap.isCapped });
               }
             });
@@ -1184,7 +1699,7 @@
           return;
         }
 
-        // Syntax 2: 6 กลับ (3 digits permutation)
+        // 6 กลับ
         if (line.includes('6กลับ') || line.includes('กลับ')) {
           let parts = line.split(/[=:]/);
           let num = parts[0].replace(/[^0-9]/g, '');
@@ -1193,14 +1708,14 @@
             let uniquePerms = getUniquePermutations(num);
             uniquePerms.forEach(p => {
               let cap = checkCappedRate('3TOP', p);
-              if (cap.policy === 'CLOSED') rejectedItems.push(`3บน ${p} (งดรับ)`);
+              if (cap.policy === 'CLOSED') rejectedItems.push(`3ตัวบน ${p} (งดรับ)`);
               else parsedItems.push({ betType: '3TOP', number: p, amount: amt, rate: cap.rate, isCapped: cap.isCapped });
             });
           }
           return;
         }
 
-        // Syntax 3: เลขวิ่งบน / วิ่งล่าง
+        // เลขวิ่ง
         if (line.includes('วิ่งบน') || line.includes('วิ่งล่าง')) {
           let isTop = line.includes('วิ่งบน');
           let bType = isTop ? 'RUN_TOP' : 'RUN_BOT';
@@ -1209,13 +1724,13 @@
           let amt = parts[1] ? parseFloat(parts[1].trim()) || 0 : 0;
           if (num && amt > 0) {
             let cap = checkCappedRate(bType, num);
-            if (cap.policy === 'CLOSED') rejectedItems.push(`${bType} ${num} (งดรับ)`);
+            if (cap.policy === 'CLOSED') rejectedItems.push(`${getThaiLabel(bType)} ${num} (งดรับ)`);
             else parsedItems.push({ betType: bType, number: num, amount: amt, rate: cap.rate, isCapped: cap.isCapped });
           }
           return;
         }
 
-        // Syntax 4: Standard: "123 = 100x50" or "89 = 200x200" or "45 = 100"
+        // รูปแบบปกติ
         let parts = line.split(/[=:]/);
         let num = parts[0].replace(/[^0-9]/g, '');
         let amounts = parts[1] ? parts[1].trim().split('x').map(n => parseFloat(n.trim()) || 0) : [0];
@@ -1225,12 +1740,12 @@
           let todAmt = amounts[1] || 0;
           if (topAmt > 0) {
             let cap = checkCappedRate('3TOP', num);
-            if (cap.policy === 'CLOSED') rejectedItems.push(`3บน ${num} (งดรับ)`);
+            if (cap.policy === 'CLOSED') rejectedItems.push(`3ตัวบน ${num} (งดรับ)`);
             else parsedItems.push({ betType: '3TOP', number: num, amount: topAmt, rate: cap.rate, isCapped: cap.isCapped });
           }
           if (todAmt > 0) {
             let cap = checkCappedRate('3TOD', num);
-            if (cap.policy === 'CLOSED') rejectedItems.push(`3โต๊ด ${num} (งดรับ)`);
+            if (cap.policy === 'CLOSED') rejectedItems.push(`3ตัวโต๊ด ${num} (งดรับ)`);
             else parsedItems.push({ betType: '3TOD', number: num, amount: todAmt, rate: cap.rate, isCapped: cap.isCapped });
           }
         } else if (num.length === 2) {
@@ -1238,12 +1753,12 @@
           let botAmt = amounts[1] !== undefined ? amounts[1] : topAmt;
           if (topAmt > 0) {
             let cap = checkCappedRate('2TOP', num);
-            if (cap.policy === 'CLOSED') rejectedItems.push(`2บน ${num} (งดรับ)`);
+            if (cap.policy === 'CLOSED') rejectedItems.push(`2ตัวบน ${num} (งดรับ)`);
             else parsedItems.push({ betType: '2TOP', number: num, amount: topAmt, rate: cap.rate, isCapped: cap.isCapped });
           }
           if (botAmt > 0) {
             let cap = checkCappedRate('2BOT', num);
-            if (cap.policy === 'CLOSED') rejectedItems.push(`2ล่าง ${num} (งดรับ)`);
+            if (cap.policy === 'CLOSED') rejectedItems.push(`2ตัวล่าง ${num} (งดรับ)`);
             else parsedItems.push({ betType: '2BOT', number: num, amount: botAmt, rate: cap.rate, isCapped: cap.isCapped });
           }
         }
@@ -1254,7 +1769,6 @@
         return;
       }
 
-      // Calculate totals
       let grossTotal = parsedItems.reduce((sum, it) => sum + it.amount, 0);
       let commPct = agent ? agent.commissionRate : 0;
       let discountAmount = (grossTotal * commPct) / 100;
@@ -1262,6 +1776,7 @@
 
       const newTicket = {
         id: `TKT-${Math.floor(100000 + Math.random() * 900000)}`,
+        periodName: appState.activePeriod.name,
         agentId: agent.id,
         agentName: agent.name,
         customer: customer,
@@ -1270,54 +1785,50 @@
         gross: grossTotal,
         discount: discountAmount,
         net: netTotal,
+        won: 0,
         status: 'PENDING'
       };
 
       appState.currentTickets.unshift(newTicket);
+      appState.lastActiveTicket = newTicket;
       agent.currentSales += grossTotal;
 
-      // Update Preview Box
       document.getElementById('preview-ticket-id').innerText = newTicket.id;
       document.getElementById('preview-gross').innerText = `฿${grossTotal.toLocaleString()}`;
       document.getElementById('preview-discount').innerText = `-฿${discountAmount.toLocaleString()} (${commPct}%)`;
       document.getElementById('preview-net').innerText = `฿${netTotal.toLocaleString()}`;
 
+      const printBtn = document.getElementById('preview-print-btn');
+      if (printBtn) printBtn.disabled = false;
+
+      // Render lines in THAI
       const linesBox = document.getElementById('preview-lines-container');
       linesBox.innerHTML = parsedItems.map(it => `
-        <div class="flex justify-between items-center py-1 border-b border-slate-900">
-          <span class="font-mono text-slate-300">
-            <span class="text-amber-400 font-bold">${it.number}</span> 
-            <span class="text-[11px] text-slate-400">(${it.betType})</span>
-            ${it.isCapped ? '<span class="text-[10px] text-amber-500 font-bold ml-1">[อั้น]</span>' : ''}
+        <div class="flex justify-between items-center py-1.5 border-b border-slate-900">
+          <span class="font-mono text-slate-200 text-sm">
+            <span class="text-amber-400 font-bold text-base mr-1">${it.number}</span> 
+            <span class="text-xs text-slate-400">(${getThaiLabel(it.betType)})</span>
+            ${it.isCapped ? '<span class="text-[11px] text-amber-500 font-bold ml-1">[อั้น]</span>' : ''}
           </span>
-          <span class="font-mono text-slate-200">฿${it.amount.toLocaleString()} <span class="text-[10px] text-slate-500">(@${it.rate})</span></span>
+          <span class="font-mono text-slate-200 text-sm">฿${it.amount.toLocaleString()} <span class="text-xs text-slate-500">(@${it.rate})</span></span>
         </div>
       `).join('');
 
       let alertMsg = `บันทึกโพย ${newTicket.id} ยอดรวม ฿${grossTotal.toLocaleString()} สำเร็จ!`;
-      if (rejectedItems.length > 0) {
-        alertMsg += ` (ตัดเลขอั้นไม่รับแทงออก ${rejectedItems.length} รายการ)`;
-      }
+      if (rejectedItems.length > 0) alertMsg += ` (ตัดเลขอั้นไม่รับแทงออก ${rejectedItems.length} รายการ)`;
       showAlert(alertMsg, 'success');
-
-      // Clear input
       document.getElementById('entry-raw-text').value = '';
       updateDashboardStats();
     }
 
-    // --- 8. RISK MATRIX & AUTO-HEDGING ENGINE ---
+    // --- 12. RISK ENGINE & MATRIX ---
     function computeExposureMap() {
       let map = {};
       appState.currentTickets.forEach(tkt => {
         tkt.items.forEach(it => {
           let key = `${it.betType}:${it.number}`;
           if (!map[key]) {
-            map[key] = {
-              betType: it.betType,
-              number: it.number,
-              grossTurnover: 0,
-              rate: it.rate
-            };
+            map[key] = { betType: it.betType, number: it.number, grossTurnover: 0, rate: it.rate };
           }
           map[key].grossTurnover += it.amount;
         });
@@ -1331,24 +1842,20 @@
       const exposureMap = computeExposureMap();
 
       let rows = Object.values(exposureMap);
-      if (filterType !== 'ALL') {
-        rows = rows.filter(r => r.betType === filterType);
-      }
+      if (filterType !== 'ALL') rows = rows.filter(r => r.betType === filterType);
 
-      // Calculate retained & max exposure
       rows.forEach(r => {
         let key = `${r.betType}:${r.number}`;
         r.hedged = appState.hedgedRecords[key] || 0;
         r.retained = Math.max(0, r.grossTurnover - r.hedged);
         r.maxLoss = r.retained * r.rate;
-        r.limit = RISK_LIMITS[r.betType] || 100000;
+        r.limit = appConfig.riskLimits[r.betType] || 100000;
       });
 
-      // Sort by Max Loss descending
       rows.sort((a, b) => b.maxLoss - a.maxLoss);
 
       if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-500">ยังไม่มีข้อมูลการแทงในงวดนี้</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-500 text-sm">ยังไม่มีข้อมูลการแทงในงวดนี้</td></tr>`;
         return;
       }
 
@@ -1356,21 +1863,21 @@
         let key = `${r.betType}:${r.number}`;
         let isOverLimit = r.maxLoss > r.limit;
         let statusBadge = isOverLimit 
-          ? `<span class="badge bg-rose-950 text-rose-400 border border-rose-800">เสี่ยงสูงเกินเพดาน</span>`
-          : `<span class="badge bg-emerald-950 text-emerald-400 border border-emerald-800">ปลอดภัย</span>`;
+          ? `<span class="badge bg-rose-950 text-rose-400 border border-rose-800 whitespace-nowrap">เสี่ยงสูงเกินเพดาน</span>`
+          : `<span class="badge bg-emerald-950 text-emerald-400 border border-emerald-800 whitespace-nowrap">ปลอดภัย</span>`;
 
         return `
           <tr class="hover:bg-slate-900/50 transition">
-            <td class="p-3 font-semibold text-slate-300">${r.betType}</td>
-            <td class="p-3 font-mono font-bold text-amber-400 text-sm">${r.number}</td>
-            <td class="p-3 text-right font-mono text-slate-200">฿${r.grossTurnover.toLocaleString()}</td>
-            <td class="p-3 text-right font-mono text-amber-400">฿${r.hedged.toLocaleString()}</td>
-            <td class="p-3 text-right font-mono text-emerald-400 font-bold">฿${r.retained.toLocaleString()}</td>
-            <td class="p-3 text-right font-mono text-slate-400">@${r.rate}</td>
-            <td class="p-3 text-right font-mono font-bold ${isOverLimit ? 'text-rose-400 text-sm' : 'text-slate-200'}">฿${Math.round(r.maxLoss).toLocaleString()}</td>
-            <td class="p-3 text-center">${statusBadge}</td>
-            <td class="p-3 text-center">
-              <button onclick="hedgeNumberPrompt('${key}')" class="px-2 py-1 bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 rounded text-[11px] transition">
+            <td class="p-3.5 font-semibold text-slate-300">${getThaiLabel(r.betType)}</td>
+            <td class="p-3.5 font-mono font-bold text-amber-400 text-base">${r.number}</td>
+            <td class="p-3.5 text-right font-mono text-slate-200">฿${r.grossTurnover.toLocaleString()}</td>
+            <td class="p-3.5 text-right font-mono text-amber-400">฿${r.hedged.toLocaleString()}</td>
+            <td class="p-3.5 text-right font-mono text-emerald-400 font-bold">฿${r.retained.toLocaleString()}</td>
+            <td class="p-3.5 text-right font-mono text-slate-400">@${r.rate}</td>
+            <td class="p-3.5 text-right font-mono font-bold ${isOverLimit ? 'text-rose-400 text-base' : 'text-slate-200'}">฿${Math.round(r.maxLoss).toLocaleString()}</td>
+            <td class="p-3.5 text-center">${statusBadge}</td>
+            <td class="p-3.5 text-center">
+              <button onclick="hedgeNumberPrompt('${key}')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200 rounded-lg text-xs transition whitespace-nowrap font-medium">
                 ส่งต่อเจ้าใหญ่
               </button>
             </td>
@@ -1399,7 +1906,7 @@
 
       Object.values(exposureMap).forEach(r => {
         let key = `${r.betType}:${r.number}`;
-        let limit = RISK_LIMITS[r.betType] || 100000;
+        let limit = appConfig.riskLimits[r.betType] || 100000;
         let maxAllowedSales = limit / r.rate;
         if (r.grossTurnover > maxAllowedSales) {
           let neededHedge = Math.ceil(r.grossTurnover - maxAllowedSales);
@@ -1413,7 +1920,7 @@
       showAlert(`ระบบตัดยอดส่งออกอัตโนมัติ ${hedgedCount} รายการให้ไม่เกินเพดานความเสี่ยงแล้ว`, 'success');
     }
 
-    // --- 9. CAPPED NUMBERS MANAGEMENT ---
+    // --- 13. CAPPED NUMBERS ---
     function toggleCappedCustomRateInput() {
       const policy = document.getElementById('capped-policy-select').value;
       const box = document.getElementById('capped-custom-rate-box');
@@ -1441,7 +1948,7 @@
 
       document.getElementById('capped-number-input').value = '';
       renderCappedTable();
-      showAlert(`เพิ่มเลขอั้น ${num} (${bType}) เข้าสู่งวดปัจจุบันแล้ว`, 'success');
+      showAlert(`เพิ่มเลขอั้น ${num} (${getThaiLabel(bType)}) เข้าสู่งวดปัจจุบันแล้ว`, 'success');
     }
 
     function removeCappedNumber(idx) {
@@ -1476,12 +1983,12 @@
 
         return `
           <tr class="hover:bg-slate-900/50 transition">
-            <td class="p-3 text-slate-300">${c.betType}</td>
-            <td class="p-3 font-mono font-bold text-amber-400 text-sm">${c.number}</td>
-            <td class="p-3">${policyLabel}</td>
-            <td class="p-3 text-right font-mono text-slate-200">${rateDisplay}</td>
-            <td class="p-3 text-center">
-              <button onclick="removeCappedNumber(${i})" class="text-slate-500 hover:text-rose-400 transition">
+            <td class="p-3.5 text-slate-300 font-medium">${getThaiLabel(c.betType)}</td>
+            <td class="p-3.5 font-mono font-bold text-amber-400 text-base">${c.number}</td>
+            <td class="p-3.5">${policyLabel}</td>
+            <td class="p-3.5 text-right font-mono text-slate-200 font-semibold">${rateDisplay}</td>
+            <td class="p-3.5 text-center">
+              <button onclick="removeCappedNumber(${i})" class="text-slate-500 hover:text-rose-400 transition p-1">
                 <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
               </button>
             </td>
@@ -1491,23 +1998,16 @@
       lucide.createIcons();
     }
 
-    // --- 10. AGENTS MANAGEMENT ---
-    function openAddAgentModal() {
-      document.getElementById('modal-add-agent').classList.remove('hidden');
-    }
-    function closeAddAgentModal() {
-      document.getElementById('modal-add-agent').classList.add('hidden');
-    }
+    // --- 14. AGENTS MANAGEMENT ---
+    function openAddAgentModal() { document.getElementById('modal-add-agent').classList.remove('hidden'); }
+    function closeAddAgentModal() { document.getElementById('modal-add-agent').classList.add('hidden'); }
     function confirmAddNewAgent() {
       const name = document.getElementById('new-agent-name').value.trim();
       const phone = document.getElementById('new-agent-phone').value.trim();
       const comm = parseFloat(document.getElementById('new-agent-comm').value) || 15;
       const credit = parseFloat(document.getElementById('new-agent-credit').value) || 100000;
 
-      if (!name) {
-        alert('กรุณากรอกชื่อตัวแทน');
-        return;
-      }
+      if (!name) { alert('กรุณากรอกชื่อตัวแทน'); return; }
 
       appState.agents.push({
         id: `AG-0${appState.agents.length + 1}`,
@@ -1531,25 +2031,34 @@
         let netDue = a.currentSales - commVal;
         return `
           <tr class="hover:bg-slate-900/50 transition">
-            <td class="p-3 font-mono text-slate-400">${a.id}</td>
-            <td class="p-3 font-semibold text-white">${a.name}</td>
-            <td class="p-3 text-slate-400">${a.phone}</td>
-            <td class="p-3 text-right font-mono text-amber-400 font-bold">${a.commissionRate}%</td>
-            <td class="p-3 text-right font-mono text-slate-300">฿${a.creditLimit.toLocaleString()}</td>
-            <td class="p-3 text-right font-mono text-white">฿${a.currentSales.toLocaleString()}</td>
-            <td class="p-3 text-right font-mono text-emerald-400 font-bold">฿${netDue.toLocaleString()}</td>
-            <td class="p-3 text-center"><span class="badge bg-emerald-950 text-emerald-400 border border-emerald-800">ACTIVE</span></td>
+            <td class="p-3.5 font-mono text-slate-400">${a.id}</td>
+            <td class="p-3.5 font-bold text-white whitespace-nowrap">${a.name}</td>
+            <td class="p-3.5 text-slate-400 whitespace-nowrap font-mono">${a.phone}</td>
+            <td class="p-3.5 text-right font-mono text-amber-400 font-bold">${a.commissionRate}%</td>
+            <td class="p-3.5 text-right font-mono text-slate-300">฿${a.creditLimit.toLocaleString()}</td>
+            <td class="p-3.5 text-right font-mono text-white">฿${a.currentSales.toLocaleString()}</td>
+            <td class="p-3.5 text-right font-mono text-emerald-400 font-bold text-base">฿${netDue.toLocaleString()}</td>
+            <td class="p-3.5 text-center"><span class="badge bg-emerald-950 text-emerald-400 border border-emerald-800">ACTIVE</span></td>
           </tr>
         `;
       }).join('');
     }
 
-    // --- 11. DRAW SETTLEMENT ENGINE ---
+    // --- 15. DRAW SETTLEMENT ---
     function randomizeDrawNumbers() {
       const p1 = Math.floor(100000 + Math.random() * 900000).toString();
-      const bot = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+      const bot2 = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+      const f1 = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const f2 = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const b1 = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const b2 = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+
       document.getElementById('draw-prize1-input').value = p1;
-      document.getElementById('draw-prize2bot-input').value = bot;
+      document.getElementById('draw-prize2bot-input').value = bot2;
+      document.getElementById('draw-front3-1-input').value = f1;
+      document.getElementById('draw-front3-2-input').value = f2;
+      document.getElementById('draw-bot3-1-input').value = b1;
+      document.getElementById('draw-bot3-2-input').value = b2;
     }
 
     function executeDrawSettlement() {
@@ -1560,22 +2069,29 @@
 
       const p1 = document.getElementById('draw-prize1-input').value.trim();
       const bot2 = document.getElementById('draw-prize2bot-input').value.trim();
+      const f1 = document.getElementById('draw-front3-1-input').value.trim();
+      const f2 = document.getElementById('draw-front3-2-input').value.trim();
+      const b1 = document.getElementById('draw-bot3-1-input').value.trim();
+      const b2 = document.getElementById('draw-bot3-2-input').value.trim();
 
-      if (p1.length !== 6 || bot2.length !== 2) {
-        alert('กรุณากรอกรางวัลที่ 1 ให้ครบ 6 หลัก และเลขท้าย 2 ตัวล่างให้ครบ 2 หลัก');
+      if (p1.length !== 6 || bot2.length !== 2 || f1.length !== 3 || f2.length !== 3 || b1.length !== 3 || b2.length !== 3) {
+        alert('กรุณากรอกรางวัลให้ครบทุกหมวด: รางวัลที่ 1 (6 หลัก), 2 ตัวล่าง (2 หลัก), เลขหน้า 3 ตัว (2 รางวัล), เลขท้าย 3 ตัว (2 รางวัล)');
         return;
       }
 
       const top3 = p1.substring(3, 6);
       const top2 = p1.substring(4, 6);
       const tod3 = getUniquePermutations(top3);
+      const front3List = [f1, f2];
+      const bot3List = [b1, b2];
 
       document.getElementById('res-3top').innerText = top3;
       document.getElementById('res-2top').innerText = top2;
       document.getElementById('res-2bot').innerText = bot2;
       document.getElementById('res-3tod').innerText = tod3.join(', ');
+      document.getElementById('res-3front').innerText = front3List.join(', ');
+      document.getElementById('res-3bot').innerText = bot3List.join(', ');
 
-      // Evaluate Winning tickets
       let totalGross = 0;
       let totalCommission = 0;
       let totalPayout = 0;
@@ -1591,6 +2107,8 @@
           else if (it.betType === '3TOD' && tod3.includes(it.number)) isWin = true;
           else if (it.betType === '2TOP' && it.number === top2) isWin = true;
           else if (it.betType === '2BOT' && it.number === bot2) isWin = true;
+          else if (it.betType === '3FRONT' && front3List.includes(it.number)) isWin = true;
+          else if (it.betType === '3BOT' && bot3List.includes(it.number)) isWin = true;
           else if (it.betType === 'RUN_TOP' && top3.includes(it.number)) isWin = true;
           else if (it.betType === 'RUN_BOT' && bot2.includes(it.number)) isWin = true;
 
@@ -1612,24 +2130,25 @@
 
       let netPnL = totalGross - totalCommission - totalPayout;
 
-      // Update Settlement UI
       document.getElementById('settle-turnover').innerText = `฿${totalGross.toLocaleString()}`;
       document.getElementById('settle-comm').innerText = `-฿${totalCommission.toLocaleString()}`;
       document.getElementById('settle-payout').innerText = `฿${totalPayout.toLocaleString()}`;
 
       const pnlEl = document.getElementById('settle-net-pnl');
       pnlEl.innerText = `฿${netPnL.toLocaleString()}`;
-      pnlEl.className = netPnL >= 0 ? 'font-mono text-emerald-400 font-bold text-base' : 'font-mono text-rose-500 font-bold text-base';
+      pnlEl.className = netPnL >= 0 ? 'font-mono text-emerald-400 font-bold text-xl' : 'font-mono text-rose-500 font-bold text-xl';
 
       document.getElementById('settlement-status-badge').className = 'badge bg-emerald-950 text-emerald-400 border border-emerald-800';
       document.getElementById('settlement-status-badge').innerText = 'ตรวจรางวัลแล้ว';
 
       const archBtn = document.getElementById('archive-period-btn');
       archBtn.disabled = false;
-      archBtn.className = 'px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-2 transition cursor-pointer';
+      archBtn.className = 'w-full sm:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition cursor-pointer shadow-md shadow-amber-500/20';
 
-      // Save draw result in activePeriod
-      appState.activePeriod.drawResult = { prize1: p1, top3, top2, bot2, tod3 };
+      const printSettleBtn = document.getElementById('settle-print-btn');
+      if (printSettleBtn) printSettleBtn.disabled = false;
+
+      appState.activePeriod.drawResult = { prize1: p1, top3, top2, bot2, tod3, front3: front3List, bot3: bot3List };
       appState.activePeriod.financials = {
         grossTurnover: totalGross,
         commissionsPaid: totalCommission,
@@ -1647,10 +2166,8 @@
       p.status = 'ARCHIVED';
       p.tickets = JSON.parse(JSON.stringify(appState.currentTickets));
 
-      // Push to history
       appState.historyPeriods.unshift(p);
 
-      // Reset active period
       appState.activePeriod = null;
       appState.currentTickets = [];
       appState.currentCappedNumbers = [];
@@ -1663,10 +2180,10 @@
       switchTab('history');
     }
 
-    // --- 12. HISTORICAL ARCHIVES TAB LOGIC ---
+    // --- 16. HISTORICAL ARCHIVES TAB ---
     function initHistorySelect() {
       const select = document.getElementById('history-period-select');
-      select.innerHTML = appState.historyPeriods.map((p, idx) => 
+      select.innerHTML = appState.historyPeriods.map(p => 
         `<option value="${p.id}">${p.name} (ตรวจแล้ว)</option>`
       ).join('');
       renderSelectedHistoryPeriod();
@@ -1675,8 +2192,8 @@
     let historyTicketsFilter = 'ALL';
     function filterHistoryTickets(mode) {
       historyTicketsFilter = mode;
-      document.getElementById('hist-filter-all').className = mode === 'ALL' ? 'px-2.5 py-1 text-xs rounded bg-slate-800 text-white' : 'px-2.5 py-1 text-xs rounded bg-slate-900 text-slate-400 hover:text-white';
-      document.getElementById('hist-filter-win').className = mode === 'WIN' ? 'px-2.5 py-1 text-xs rounded bg-slate-800 text-white' : 'px-2.5 py-1 text-xs rounded bg-slate-900 text-slate-400 hover:text-white';
+      document.getElementById('hist-filter-all').className = mode === 'ALL' ? 'px-3 py-1.5 text-xs sm:text-sm rounded-xl bg-slate-800 text-white font-medium' : 'px-3 py-1.5 text-xs sm:text-sm rounded-xl bg-slate-900 text-slate-400 hover:text-white font-medium';
+      document.getElementById('hist-filter-win').className = mode === 'WIN' ? 'px-3 py-1.5 text-xs sm:text-sm rounded-xl bg-slate-800 text-white font-medium' : 'px-3 py-1.5 text-xs sm:text-sm rounded-xl bg-slate-900 text-slate-400 hover:text-white font-medium';
       renderSelectedHistoryPeriod();
     }
 
@@ -1687,7 +2204,6 @@
 
       if (!period) return;
 
-      // KPIs
       document.getElementById('hist-turnover').innerText = `฿${period.financials.grossTurnover.toLocaleString()}`;
       document.getElementById('hist-tickets-count').innerText = `${period.tickets ? period.tickets.length : 0} โพย`;
       document.getElementById('hist-commission').innerText = `฿${period.financials.commissionsPaid.toLocaleString()}`;
@@ -1695,20 +2211,20 @@
 
       const pnlEl = document.getElementById('hist-net-pnl');
       pnlEl.innerText = `฿${period.financials.netPnL.toLocaleString()}`;
-      pnlEl.className = period.financials.netPnL >= 0 ? 'text-xl font-bold text-emerald-400 mt-1' : 'text-xl font-bold text-rose-500 mt-1';
+      pnlEl.className = period.financials.netPnL >= 0 ? 'text-2xl sm:text-3xl font-bold text-emerald-400 mt-1.5' : 'text-2xl sm:text-3xl font-bold text-rose-500 mt-1.5';
 
       let margin = period.financials.grossTurnover > 0 ? (period.financials.netPnL / period.financials.grossTurnover) * 100 : 0;
       document.getElementById('hist-margin-pct').innerText = `Margin: ${margin.toFixed(1)}%`;
 
-      // Results
       if (period.drawResult) {
         document.getElementById('hist-prize1').innerText = period.drawResult.prize1 || '-';
         document.getElementById('hist-3top').innerText = period.drawResult.top3 || '-';
         document.getElementById('hist-2top').innerText = period.drawResult.top2 || '-';
         document.getElementById('hist-2bot').innerText = period.drawResult.bot2 || '-';
+        document.getElementById('hist-3front').innerText = period.drawResult.front3 ? period.drawResult.front3.join(', ') : '-';
+        document.getElementById('hist-3bot').innerText = period.drawResult.bot3 ? period.drawResult.bot3.join(', ') : '-';
       }
 
-      // Tickets Table
       const tbody = document.getElementById('history-tickets-table-body');
       let tickets = period.tickets || [];
       if (historyTicketsFilter === 'WIN') {
@@ -1716,30 +2232,270 @@
       }
 
       if (tickets.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">ไม่มีข้อมูลโพยตามเงื่อนไขที่เลือก</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-500">ไม่มีข้อมูลโพยตามเงื่อนไขที่เลือก</td></tr>`;
         return;
       }
 
       tbody.innerHTML = tickets.map(t => {
         let isWon = t.won > 0;
         let badge = isWon 
-          ? `<span class="badge bg-emerald-950 text-emerald-400 border border-emerald-800">ถูกรางวัล</span>`
-          : `<span class="badge bg-slate-900 text-slate-500 border border-slate-800">ไม่ถูกรางวัล</span>`;
+          ? `<span class="badge bg-emerald-950 text-emerald-400 border border-emerald-800 whitespace-nowrap">ถูกรางวัล</span>`
+          : `<span class="badge bg-slate-900 text-slate-500 border border-slate-800 whitespace-nowrap">ไม่ถูกรางวัล</span>`;
 
         return `
           <tr class="hover:bg-slate-900/50 transition">
-            <td class="p-3 font-mono font-bold text-slate-300">${t.id}</td>
-            <td class="p-3 text-slate-400">${t.agent || t.agentName || '-'}</td>
-            <td class="p-3 text-slate-200 font-medium">${t.customer || '-'}</td>
-            <td class="p-3 text-right font-mono text-slate-200">฿${t.gross.toLocaleString()}</td>
-            <td class="p-3 text-right font-mono font-bold ${isWon ? 'text-amber-400' : 'text-slate-500'}">฿${(t.won || 0).toLocaleString()}</td>
-            <td class="p-3 text-center">${badge}</td>
+            <td class="p-3.5 font-mono font-bold text-amber-400 text-base">${t.id}</td>
+            <td class="p-3.5 text-slate-300 font-medium whitespace-nowrap">${t.agent || t.agentName || '-'}</td>
+            <td class="p-3.5 text-slate-200 font-medium whitespace-nowrap">${t.customer || '-'}</td>
+            <td class="p-3.5 text-right font-mono text-slate-200 font-semibold">฿${t.gross.toLocaleString()}</td>
+            <td class="p-3.5 text-right font-mono font-bold ${isWon ? 'text-amber-400' : 'text-slate-500'}">฿${(t.won || 0).toLocaleString()}</td>
+            <td class="p-3.5 text-center">${badge}</td>
+            <td class="p-3.5 text-center">
+              <button onclick="viewHistoryTicketDetail('${period.id}', '${t.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs whitespace-nowrap transition font-semibold">
+                ดูโพย
+              </button>
+            </td>
           </tr>
         `;
       }).join('');
     }
 
-    // --- 13. DASHBOARD & TICKETS HELPERS ---
+    function viewHistoryTicketDetail(periodId, tktId) {
+      const period = appState.historyPeriods.find(p => p.id === periodId);
+      if (!period || !period.tickets) return;
+      const tkt = period.tickets.find(t => t.id === tktId);
+      if (!tkt) return;
+
+      appState.modalViewingTicket = { ...tkt, periodName: period.name };
+
+      document.getElementById('modal-tkt-id').innerText = tkt.id;
+      document.getElementById('modal-tkt-meta').innerText = `งวด: ${period.name} | สาย: ${tkt.agent || tkt.agentName} | ลูกค้า: ${tkt.customer}`;
+      document.getElementById('modal-tkt-total').innerText = `฿${tkt.gross.toLocaleString()}`;
+
+      const tbody = document.getElementById('modal-tkt-items-body');
+      tbody.innerHTML = tkt.items.map(it => `
+        <tr class="hover:bg-slate-900/50">
+          <td class="p-2.5 text-slate-300 font-medium">${getThaiLabel(it.betType)}</td>
+          <td class="p-2.5 font-mono font-bold text-amber-400 text-base">${it.number}</td>
+          <td class="p-2.5 text-right font-mono text-white">฿${it.amount.toLocaleString()}</td>
+          <td class="p-2.5 text-right font-mono text-slate-400">@${it.rate}</td>
+          <td class="p-2.5 text-right font-mono ${it.isWin ? 'text-amber-400 font-bold' : 'text-slate-500'}">
+            ${it.isWin ? `+฿${it.winAmount.toLocaleString()}` : '-'}
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('modal-ticket-detail').classList.remove('hidden');
+    }
+
+    function viewActiveTicketDetail(tktId) {
+      const tkt = appState.currentTickets.find(t => t.id === tktId);
+      if (!tkt) return;
+
+      appState.modalViewingTicket = { ...tkt, periodName: appState.activePeriod ? appState.activePeriod.name : 'ปัจจุบัน' };
+
+      document.getElementById('modal-tkt-id').innerText = tkt.id;
+      document.getElementById('modal-tkt-meta').innerText = `สาย: ${tkt.agentName} | ลูกค้า: ${tkt.customer} | เวลา: ${tkt.createdAt}`;
+      document.getElementById('modal-tkt-total').innerText = `฿${tkt.gross.toLocaleString()}`;
+
+      const tbody = document.getElementById('modal-tkt-items-body');
+      tbody.innerHTML = tkt.items.map(it => `
+        <tr>
+          <td class="p-2.5 text-slate-300 font-medium">${getThaiLabel(it.betType)}</td>
+          <td class="p-2.5 font-mono font-bold text-amber-400 text-base">${it.number}</td>
+          <td class="p-2.5 text-right font-mono text-white">฿${it.amount.toLocaleString()}</td>
+          <td class="p-2.5 text-right font-mono text-slate-400">@${it.rate}</td>
+          <td class="p-2.5 text-right font-mono ${it.isWin ? 'text-amber-400 font-bold' : 'text-slate-500'}">
+            ${it.isWin ? `+฿${it.winAmount.toLocaleString()}` : '-'}
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('modal-ticket-detail').classList.remove('hidden');
+    }
+
+    function closeTicketDetailModal() {
+      document.getElementById('modal-ticket-detail').classList.add('hidden');
+    }
+
+    // --- 17. PRINT ENGINE (RELIABLE & THAI 80mm / A4) ---
+    function printTicketSlip(tkt) {
+      if (!tkt) return;
+      const printContainer = document.getElementById('print-area');
+      
+      let itemsHtml = (tkt.items || []).map(it => `
+        <div style="display:flex; justify-content:space-between; margin-bottom: 4px; font-size:13px;">
+          <span><strong>${it.number}</strong> (${getThaiLabel(it.betType)})</span>
+          <span>${it.amount.toLocaleString()} ฿</span>
+        </div>
+      `).join('');
+
+      printContainer.innerHTML = `
+        <div style="max-width:300px; margin:0 auto; padding:15px; font-family:'Courier New', monospace; border:1px dashed #000; color:#000;">
+          <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:8px; margin-bottom:8px;">
+            <h2 style="margin:0; font-size:18px; font-weight:bold;">สลิปใบยืนยันการรับแทง</h2>
+            <p style="margin:2px 0 0 0; font-size:12px;">LOTTO BOOKMAKER TERMINAL</p>
+          </div>
+          <div style="font-size:12px; margin-bottom:8px; line-height:1.5;">
+            <div><strong>เลขที่โพย:</strong> ${tkt.id}</div>
+            <div><strong>งวด:</strong> ${tkt.periodName || 'งวดปัจจุบัน'}</div>
+            <div><strong>เวลาที่คีย์:</strong> ${tkt.createdAt || '-'}</div>
+            <div><strong>สายส่งตัวแทน:</strong> ${tkt.agentName || tkt.agent || '-'}</div>
+            <div><strong>ลูกค้า:</strong> ${tkt.customer || '-'}</div>
+          </div>
+          <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:8px 0; margin-bottom:8px;">
+            ${itemsHtml}
+          </div>
+          <div style="font-size:13px; line-height:1.6;">
+            <div style="display:flex; justify-content:space-between;">
+              <span>ยอดรวมแทง:</span>
+              <span><strong>${(tkt.gross || 0).toLocaleString()} ฿</strong></span>
+            </div>
+            ${tkt.discount ? `
+            <div style="display:flex; justify-content:space-between;">
+              <span>ส่วนลดคอมมิชชัน:</span>
+              <span>-${tkt.discount.toLocaleString()} ฿</span>
+            </div>
+            ` : ''}
+            <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:bold; margin-top:4px;">
+              <span>ยอดสุทธิที่ต้องชำระ:</span>
+              <span>${(tkt.net || tkt.gross || 0).toLocaleString()} ฿</span>
+            </div>
+          </div>
+          <div style="text-align:center; margin-top:15px; font-size:11px; border-top:1px dashed #000; padding-top:8px;">
+            *** โปรดเก็บใบสลิปนี้ไว้เป็นหลักฐาน ***
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => { window.print(); }, 150);
+    }
+
+    function printCurrentActiveTicket() {
+      if (appState.lastActiveTicket) printTicketSlip(appState.lastActiveTicket);
+    }
+
+    function printModalCurrentTicket() {
+      if (appState.modalViewingTicket) printTicketSlip(appState.modalViewingTicket);
+    }
+
+    function printSettlementReport(periodData) {
+      if (!periodData || !periodData.financials) return;
+      const printContainer = document.getElementById('print-area');
+
+      let ticketsHtml = (periodData.tickets || []).map((t, idx) => `
+        <tr style="border-bottom:1px solid #ddd; font-size:13px;">
+          <td style="padding:6px;">${idx + 1}</td>
+          <td style="padding:6px;">${t.id}</td>
+          <td style="padding:6px;">${t.agent || t.agentName || '-'}</td>
+          <td style="padding:6px;">${t.customer || '-'}</td>
+          <td style="padding:6px; text-align:right;">${(t.gross || 0).toLocaleString()} ฿</td>
+          <td style="padding:6px; text-align:right;">${(t.won || 0).toLocaleString()} ฿</td>
+          <td style="padding:6px; text-align:center;">${t.won > 0 ? 'ถูกรางวัล' : '-'}</td>
+        </tr>
+      `).join('');
+
+      printContainer.innerHTML = `
+        <div style="max-width:800px; margin:0 auto; padding:30px; font-family:'Sarabun', sans-serif; color:#000;">
+          <div style="border-bottom:2px solid #000; padding-bottom:12px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:flex-end;">
+            <div>
+              <h1 style="margin:0; font-size:24px; font-weight:bold;">รายงานสรุปผลการออกรางวัลและงบกำไร/ขาดทุน</h1>
+              <p style="margin:4px 0 0 0; font-size:15px;">ชื่องวด: <strong>${periodData.name}</strong> (ปิดรับ ${periodData.cutoffTime})</p>
+            </div>
+            <div style="text-align:right; font-size:13px;">
+              <div>พิมพ์วันที่: ${new Date().toLocaleDateString('th-TH')}</div>
+              <div>เวลา: ${new Date().toLocaleTimeString('th-TH')}</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #000; padding:12px; margin-bottom:18px; background:#f9f9f9;">
+            <strong style="font-size:14px;">ผลการออกรางวัลอย่างเป็นทางการ:</strong>
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-top:8px; font-size:14px;">
+              <div>รางวัลที่ 1: <strong>${periodData.drawResult ? periodData.drawResult.prize1 : '-'}</strong></div>
+              <div>3 ตัวบน: <strong>${periodData.drawResult ? periodData.drawResult.top3 : '-'}</strong></div>
+              <div>2 ตัวบน: <strong>${periodData.drawResult ? periodData.drawResult.top2 : '-'}</strong></div>
+              <div>2 ตัวล่าง: <strong>${periodData.drawResult ? periodData.drawResult.bot2 : '-'}</strong></div>
+              <div style="grid-column: span 2;">3 ตัวหน้า: <strong>${periodData.drawResult && periodData.drawResult.front3 ? periodData.drawResult.front3.join(', ') : '-'}</strong></div>
+              <div style="grid-column: span 2;">3 ตัวล่าง: <strong>${periodData.drawResult && periodData.drawResult.bot3 ? periodData.drawResult.bot3.join(', ') : '-'}</strong></div>
+            </div>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:24px; font-size:14px;">
+            <thead>
+              <tr style="background:#eee; border-top:1px solid #000; border-bottom:1px solid #000;">
+                <th style="padding:8px; text-align:left;">รายการบัญชี</th>
+                <th style="padding:8px; text-align:right;">จำนวนเงิน (บาท)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:8px;">ยอดรับแทงรวมทั้งหมด (Gross Turnover)</td>
+                <td style="padding:8px; text-align:right;">${periodData.financials.grossTurnover.toLocaleString()} ฿</td>
+              </tr>
+              <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:8px;">หัก ยอดส่งต่อเจ้าใหญ่ (กระจายความเสี่ยงออก)</td>
+                <td style="padding:8px; text-align:right;">-${(periodData.financials.hedgedAmount || 0).toLocaleString()} ฿</td>
+              </tr>
+              <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:8px;">หัก คอมมิชชันจ่ายให้ตัวแทนสายส่ง</td>
+                <td style="padding:8px; text-align:right;">-${periodData.financials.commissionsPaid.toLocaleString()} ฿</td>
+              </tr>
+              <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:8px;">หัก ยอดเงินรางวัลที่ต้องจ่ายให้ผู้ถูกรางวัล</td>
+                <td style="padding:8px; text-align:right;">-${periodData.financials.payoutAmount.toLocaleString()} ฿</td>
+              </tr>
+              <tr style="background:#f2f2f2; font-weight:bold; font-size:16px; border-top:1px solid #000; border-bottom:2px solid #000;">
+                <td style="padding:10px 8px;">กำไร / ขาดทุนสุทธิของเจ้ามือ (Net P&L)</td>
+                <td style="padding:10px 8px; text-align:right;">${periodData.financials.netPnL.toLocaleString()} ฿</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3 style="font-size:15px; font-weight:bold; margin-bottom:8px;">รายการโพยในงวดนี้ (${(periodData.tickets || []).length} ใบ)</h3>
+          <table style="width:100%; border-collapse:collapse; margin-bottom:24px;">
+            <thead>
+              <tr style="background:#eee; border-top:1px solid #000; border-bottom:1px solid #000; font-size:12px;">
+                <th style="padding:6px; text-align:left;">#</th>
+                <th style="padding:6px; text-align:left;">เลขที่โพย</th>
+                <th style="padding:6px; text-align:left;">ตัวแทน</th>
+                <th style="padding:6px; text-align:left;">ลูกค้า</th>
+                <th style="padding:6px; text-align:right;">ยอดแทง</th>
+                <th style="padding:6px; text-align:right;">ถูกรางวัล</th>
+                <th style="padding:6px; text-align:center;">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ticketsHtml}
+            </tbody>
+          </table>
+
+          <div style="display:flex; justify-content:space-between; margin-top:50px; font-size:13px; text-align:center;">
+            <div style="width:220px; border-top:1px solid #000; padding-top:8px;">ผู้จัดทำบัญชี</div>
+            <div style="width:220px; border-top:1px solid #000; padding-top:8px;">ผู้ตรวจรับรอง (เจ้ามือ)</div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => { window.print(); }, 150);
+    }
+
+    function printCurrentSettlementReport() {
+      if (appState.activePeriod && appState.activePeriod.financials) {
+        printSettlementReport({
+          ...appState.activePeriod,
+          tickets: appState.currentTickets
+        });
+      }
+    }
+
+    function printSelectedHistoryReport() {
+      const select = document.getElementById('history-period-select');
+      const periodId = select.value;
+      const period = appState.historyPeriods.find(p => p.id === periodId);
+      if (period) printSettlementReport(period);
+    }
+
+    // --- 18. DASHBOARD & HELPERS ---
     function updateDashboardStats() {
       let turnover = appState.currentTickets.reduce((s, t) => s + t.gross, 0);
       let hedgedTotal = Object.values(appState.hedgedRecords).reduce((s, v) => s + v, 0);
@@ -1755,7 +2511,7 @@
         let loss = ret * r.rate;
         if (loss > maxLoss) {
           maxLoss = loss;
-          worstNum = `${r.betType} ${r.number}`;
+          worstNum = `${getThaiLabel(r.betType)} ${r.number}`;
         }
       });
 
@@ -1766,7 +2522,6 @@
       document.getElementById('dash-max-loss').innerText = `฿${Math.round(maxLoss).toLocaleString()}`;
       document.getElementById('dash-max-loss-num').innerText = `เลขเสี่ยงสูงสุด: ${worstNum}`;
 
-      // Agent ranking table
       const agentTable = document.getElementById('dash-agent-table-body');
       agentTable.innerHTML = appState.agents.map(a => {
         let commAmt = (a.currentSales * a.commissionRate) / 100;
@@ -1774,12 +2529,12 @@
         let tCount = appState.currentTickets.filter(t => t.agentId === a.id).length;
         return `
           <tr class="hover:bg-slate-900/50 transition">
-            <td class="p-3 font-semibold text-white">${a.name}</td>
-            <td class="p-3 text-slate-400 font-mono">${tCount}</td>
-            <td class="p-3 text-right font-mono text-white">฿${a.currentSales.toLocaleString()}</td>
-            <td class="p-3 text-right font-mono text-amber-400">${a.commissionRate}%</td>
-            <td class="p-3 text-right font-mono text-slate-400">฿${commAmt.toLocaleString()}</td>
-            <td class="p-3 text-right font-mono text-emerald-400 font-bold">฿${net.toLocaleString()}</td>
+            <td class="p-3.5 font-bold text-white whitespace-nowrap">${a.name}</td>
+            <td class="p-3.5 text-slate-300 font-mono text-center font-bold">${tCount}</td>
+            <td class="p-3.5 text-right font-mono text-white">฿${a.currentSales.toLocaleString()}</td>
+            <td class="p-3.5 text-right font-mono text-amber-400 font-bold">${a.commissionRate}%</td>
+            <td class="p-3.5 text-right font-mono text-slate-300">฿${commAmt.toLocaleString()}</td>
+            <td class="p-3.5 text-right font-mono text-emerald-400 font-bold text-base">฿${net.toLocaleString()}</td>
           </tr>
         `;
       }).join('');
@@ -1793,14 +2548,14 @@
       }
       tbody.innerHTML = appState.currentTickets.map(t => `
         <tr class="hover:bg-slate-900/50 transition">
-          <td class="p-3 font-mono font-bold text-amber-400">${t.id}</td>
-          <td class="p-3 text-slate-400">${t.createdAt}</td>
-          <td class="p-3 text-slate-300">${t.agentName}</td>
-          <td class="p-3 text-white font-medium">${t.customer}</td>
-          <td class="p-3 text-right font-mono text-slate-300">฿${t.gross.toLocaleString()}</td>
-          <td class="p-3 text-right font-mono text-emerald-400 font-bold">฿${t.net.toLocaleString()}</td>
-          <td class="p-3 text-center">
-            <button onclick="viewTicketDetail('${t.id}')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs">
+          <td class="p-3.5 font-mono font-bold text-amber-400 text-base">${t.id}</td>
+          <td class="p-3.5 text-slate-400 font-mono">${t.createdAt}</td>
+          <td class="p-3.5 text-slate-200 whitespace-nowrap font-medium">${t.agentName}</td>
+          <td class="p-3.5 text-white font-semibold whitespace-nowrap">${t.customer}</td>
+          <td class="p-3.5 text-right font-mono text-slate-300">฿${t.gross.toLocaleString()}</td>
+          <td class="p-3.5 text-right font-mono text-emerald-400 font-bold text-base">฿${t.net.toLocaleString()}</td>
+          <td class="p-3.5 text-center">
+            <button onclick="viewActiveTicketDetail('${t.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs whitespace-nowrap font-medium">
               ดูโพย
             </button>
           </td>
@@ -1808,38 +2563,9 @@
       `).join('');
     }
 
-    function viewTicketDetail(tktId) {
-      const tkt = appState.currentTickets.find(t => t.id === tktId);
-      if (!tkt) return;
-
-      document.getElementById('modal-tkt-id').innerText = tkt.id;
-      document.getElementById('modal-tkt-meta').innerText = `สาย: ${tkt.agentName} | ลูกค้า: ${tkt.customer} | เวลา: ${tkt.createdAt}`;
-      document.getElementById('modal-tkt-total').innerText = `฿${tkt.net.toLocaleString()}`;
-
-      const tbody = document.getElementById('modal-tkt-items-body');
-      tbody.innerHTML = tkt.items.map(it => `
-        <tr>
-          <td class="p-2 text-slate-400">${it.betType}</td>
-          <td class="p-2 font-mono font-bold text-amber-400">${it.number}</td>
-          <td class="p-2 text-right font-mono text-white">฿${it.amount.toLocaleString()}</td>
-          <td class="p-2 text-right font-mono text-slate-400">@${it.rate}</td>
-          <td class="p-2 text-right font-mono ${it.isWin ? 'text-amber-400 font-bold' : 'text-slate-500'}">
-            ${it.isWin ? `+฿${it.winAmount.toLocaleString()}` : '-'}
-          </td>
-        </tr>
-      `).join('');
-
-      document.getElementById('modal-ticket-detail').classList.remove('hidden');
-    }
-
-    function closeTicketDetailModal() {
-      document.getElementById('modal-ticket-detail').classList.add('hidden');
-    }
-
     function renderDashboardCharts() {
-      // 1. Bet Type Pie Chart
       const ctxPie = document.getElementById('betTypeChart').getContext('2d');
-      let typeTotals = { '3TOP': 0, '3TOD': 0, '2TOP': 0, '2BOT': 0, 'RUN': 0 };
+      let typeTotals = { '3TOP': 0, '3TOD': 0, '3FRONT': 0, '3BOT': 0, '2TOP': 0, '2BOT': 0, 'RUN': 0 };
 
       appState.currentTickets.forEach(t => {
         t.items.forEach(it => {
@@ -1852,28 +2578,27 @@
       chartInstances.pie = new Chart(ctxPie, {
         type: 'doughnut',
         data: {
-          labels: ['3 ตัวบน', '3 ตัวโต๊ด', '2 ตัวบน', '2 ตัวล่าง', 'เลขวิ่ง'],
+          labels: ['3 ตัวบน', '3 ตัวโต๊ด', '3 ตัวหน้า', '3 ตัวล่าง', '2 ตัวบน', '2 ตัวล่าง', 'เลขวิ่ง'],
           datasets: [{
-            data: [typeTotals['3TOP'], typeTotals['3TOD'], typeTotals['2TOP'], typeTotals['2BOT'], typeTotals['RUN']],
-            backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ec4899', '#8b5cf6'],
+            data: [typeTotals['3TOP'], typeTotals['3TOD'], typeTotals['3FRONT'], typeTotals['3BOT'], typeTotals['2TOP'], typeTotals['2BOT'], typeTotals['RUN']],
+            backgroundColor: ['#f59e0b', '#3b82f6', '#06b6d4', '#6366f1', '#10b981', '#ec4899', '#8b5cf6'],
             borderWidth: 0
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Prompt' } } } }
+          plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Prompt', size: 12 } } } }
         }
       });
 
-      // 2. Top Exposure Bar Chart
       const ctxBar = document.getElementById('topExposureChart').getContext('2d');
       const exposureMap = computeExposureMap();
       let rows = Object.values(exposureMap).map(r => {
         let key = `${r.betType}:${r.number}`;
         let hedged = appState.hedgedRecords[key] || 0;
         let ret = Math.max(0, r.grossTurnover - hedged);
-        return { label: `${r.betType} ${r.number}`, loss: ret * r.rate };
+        return { label: `${getThaiLabel(r.betType)} ${r.number}`, loss: ret * r.rate };
       }).sort((a, b) => b.loss - a.loss).slice(0, 5);
 
       if (chartInstances.bar) chartInstances.bar.destroy();
@@ -1885,7 +2610,7 @@
             label: 'ภาระจ่ายสูงสุด (฿)',
             data: rows.map(r => r.loss),
             backgroundColor: '#f43f5e',
-            borderRadius: 4
+            borderRadius: 6
           }]
         },
         options: {
@@ -1893,8 +2618,8 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
-            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+            x: { ticks: { color: '#94a3b8', font: { size: 11, family: 'Prompt' } }, grid: { display: false } },
+            y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#1e293b' } }
           }
         }
       });
@@ -1903,10 +2628,10 @@
     function showAlert(msg, type = 'info') {
       const b = document.getElementById('alert-banner');
       b.className = type === 'success' 
-        ? 'mx-8 mt-4 p-3 rounded-lg border bg-emerald-950/80 border-emerald-800 text-emerald-300 text-xs flex items-center justify-between'
+        ? 'mx-4 sm:mx-8 mt-4 p-3.5 rounded-xl border bg-emerald-950/80 border-emerald-800 text-emerald-300 text-sm sm:text-base flex items-center justify-between'
         : type === 'error'
-        ? 'mx-8 mt-4 p-3 rounded-lg border bg-rose-950/80 border-rose-800 text-rose-300 text-xs flex items-center justify-between'
-        : 'mx-8 mt-4 p-3 rounded-lg border bg-amber-950/80 border-amber-800 text-amber-300 text-xs flex items-center justify-between';
+        ? 'mx-4 sm:mx-8 mt-4 p-3.5 rounded-xl border bg-rose-950/80 border-rose-800 text-rose-300 text-sm sm:text-base flex items-center justify-between'
+        : 'mx-4 sm:mx-8 mt-4 p-3.5 rounded-xl border bg-amber-950/80 border-amber-800 text-amber-300 text-sm sm:text-base flex items-center justify-between';
       b.innerHTML = `<span>${msg}</span><button onclick="this.parentElement.classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>`;
       b.classList.remove('hidden');
       setTimeout(() => b.classList.add('hidden'), 5000);
